@@ -1,1523 +1,329 @@
-<!DOCTYPE html>
+s<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kombi-Dokumentation</title>
+  <title>Dokumentationsassistent – Menü</title>
   <link rel="icon" type="image/png" href="favicon.png">
-  
-  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --line: #d7dfeb;
+      --text: #1f2a37;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --shadow: 0 14px 34px rgba(15, 23, 42, .08);
+      --hover-shadow: 0 20px 40px rgba(15, 23, 42, .12);
+      --disabled: #a7b6cc;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px 100px; /* extra bottom padding for sticky footer */
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .logo-box {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .logo-box img {
+      max-height: 150px;
+      width: auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.15;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    /* BETA badge – prominent */
+    .beta-badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 10px;
+      letter-spacing: 0.05em;
+      margin-top: 8px;
+    }
+
+    /* Empty-state hint */
+    .selection-hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin: -8px 0 12px;
+      min-height: 20px;
+      transition: opacity 0.2s;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* Accessible toggle buttons using <button> */
+    .big-button {
+      background: var(--card);
+      border: 2px solid #e7edf7;
+      border-radius: 20px;
+      padding: 24px 16px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px;
+      user-select: none;
+      font-family: inherit;
+    }
+
+    .big-button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+    .big-button:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .big-button[aria-pressed="true"] {
+      border-color: var(--accent);
+      background-color: #eff6ff;
+      color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--hover-shadow);
+    }
+
+    .big-button:hover:not([aria-pressed="true"]) {
+      border-color: #b9c8de;
+    }
+
+    /* Sticky bottom bar for the Weiter button */
+    .sticky-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(244, 247, 251, 0.95);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--line);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .next-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 40px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 18px rgba(37, 99, 235, 0.2);
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .next-btn:disabled {
+      background: var(--disabled);
+      box-shadow: none;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .next-btn:not(:disabled):focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .reset-btn:hover {
+      border-color: #b9c8de;
+      color: var(--text);
+    }
+
+    .reset-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    .version-tag { text-align: left; font-weight: 600; }
+    .footer-credit { text-align: right; }
+
+    @media (max-width: 600px) {
+      /* On mobile: 2-col but pad the grid so 8 buttons = 4 rows (even) */
+      .button-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .footer-row { flex-direction: column; align-items: center; }
+      .version-tag, .footer-credit { text-align: center; }
+    }
+  </style>
 </head>
 <body>
-  
-<div class="wrap">
+
+  <div class="wrap">
+    <div class="logo-box">
+      <img src="Logo.png" alt="Zahnmedizin Kaisereiche Logo" onerror="this.style.display='none'">
+    </div>
     <div class="header">
-      <h1 id="pageTitle">Kombi-Dokumentation</h1>
-      <p id="pageSubtitle">Modulare Behandlungs-Dokumentation</p>
+      <h1>Dokumentationsassistent</h1>
+      <p>Bitte wählen Sie eine oder mehrere Behandlungen aus</p>
+      <span class="beta-badge">DEMOVERSION</span>
     </div>
 
-    <div id="box_global" class="main-box always-show" style="border-color: var(--accent); background-color: #f8fbff;">
-      <h2 class="section-title">Allgemeine Patienteninfo</h2>
-      <div class="grid">
-        <div id="global_child_section" class="section full">
-          <div class="label-row"><div class="label">Handelt es sich um ein Kind?</div></div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="isChild_global" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="isChild_global" value="Nein"> Nein</label>
-          </div>
-          <div id="global_childOptions" class="sub-options">
-            <input type="text" id="erziehungsberechtigter_global" placeholder="Welcher Erziehungsberechtigte ist dabei? (z.B. Mutter, Vater)">
-          </div>
-        </div>
-
-        <div class="section full" style="margin-bottom: 0;">
-          <div class="label-row"><div class="label">Gibt es Beschwerden?</div></div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="beschwerden_global" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="beschwerden_global" value="Nein"> Nein</label>
-          </div>
-          <div id="global_beschwerdenOptions" class="sub-options">
-            <input type="text" id="beschwerdenText_global" placeholder="Details zu den Beschwerden (z.B. Schmerzen Zahn 36, Pochen...)">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="box_01" class="main-box">
-      <h2 class="section-title">01 / Frühuntersuchung</h2>
-      
-      <div id="commonSection_01" style="margin-bottom: 16px;">
-        <div class="question-grid">
-          <div class="question-card">
-            <div class="question-title">Neupatient?</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="neupatient_01" value="Ja"> Ja</label>
-              <label class="pill"><input type="radio" name="neupatient_01" value="Nein"> Nein</label>
-            </div>
-          </div>
-          <div class="question-card">
-            <div class="question-title">Röntgendiagnostik durchgeführt?</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="roentgen_01" value="Ja"> Ja</label>
-              <label class="pill"><input type="radio" name="roentgen_01" value="Nein"> Nein</label>
-            </div>
-            <div id="roentgenOptions_01" class="sub-options">
-               <div class="choice-group">
-                 <label class="choice"><input type="checkbox" name="roentgenType_01" value="Einzelzahnaufnahme"> <span>Einzelzahnaufnahme</span></label>
-                 <label class="choice"><input type="checkbox" name="roentgenType_01" value="Bissflügel"> <span>Bissflügel</span></label>
-                 <label class="choice"><input type="checkbox" name="roentgenType_01" value="OPG"> <span>OPG</span></label>
-               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="adultSection_01">
-        <div class="question-grid">
-          <div class="question-card">
-            <div class="question-title">Mundschleimhautkontrolle</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="mskAdult_01" value="o.p.B."> o.p.B.</label>
-              <label class="pill"><input type="radio" name="mskAdult_01" value="Auffällig"> Auffällig</label>
-            </div>
-            <div id="mskAdultOptions_01" class="sub-options">
-              <input type="text" id="mskAdultText_01" placeholder="Befund notieren...">
-            </div>
-          </div>
-          <div class="question-card">
-            <div class="question-title">PSI aufgenommen?</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="psi_01" value="Ja"> Ja</label>
-              <label class="pill"><input type="radio" name="psi_01" value="Nein"> Nein</label>
-            </div>
-          </div>
-          <div class="question-card">
-            <div class="question-title">PZR empfohlen?</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="pzr_01" value="Ja"> Ja</label>
-              <label class="pill"><input type="radio" name="pzr_01" value="Nein"> Nein</label>
-            </div>
-          </div>
-          <div class="question-card">
-            <div class="question-title">PA empfohlen?</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="pa_01" value="Ja"> Ja</label>
-              <label class="pill"><input type="radio" name="pa_01" value="Nein"> Nein</label>
-            </div>
-          </div>
-          <div class="question-card full-width">
-            <div class="question-title">Zahnstein entfernt?</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="zst_01" value="Ja"> Ja</label>
-              <label class="pill"><input type="radio" name="zst_01" value="Nein"> Nein</label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="childSection_01">
-        <div class="question-grid">
-          <div class="question-card">
-            <div class="question-title">Art der Untersuchung</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="untersuchung_01" value="FU"> FU</label>
-              <label class="pill"><input type="radio" name="untersuchung_01" value="01"> 01</label>
-            </div>
-          </div>
-          <div class="question-card">
-            <div class="question-title">Gebissphase</div>
-            <div class="choice-group">
-              <label class="choice"><input type="radio" name="gebiss_01" value="Milchgebiss"> <span>Milchgebiss</span></label>
-              <label class="choice"><input type="radio" name="gebiss_01" value="Wechselgebiss"> <span>Wechselgebiss</span></label>
-              <label class="choice"><input type="radio" name="gebiss_01" value="bleibendes Gebiss"> <span>bleibendes Gebiss</span></label>
-            </div>
-          </div>
-          <div class="question-card">
-            <div class="question-title">Mundschleimhautkontrolle</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="mskChild_01" value="o.p.B."> o.p.B.</label>
-              <label class="pill"><input type="radio" name="mskChild_01" value="Auffällig"> Auffällig</label>
-            </div>
-            <div id="mskChildOptions_01" class="sub-options">
-              <input type="text" id="mskChildText_01" placeholder="Befund notieren...">
-            </div>
-          </div>
-          <div class="question-card">
-            <div class="question-title">Zungenbeweglichkeit</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="zunge_01" value="nicht eingeschränkt"> nicht eingeschr.</label>
-              <label class="pill"><input type="radio" name="zunge_01" value="eingeschränkt"> eingeschränkt</label>
-            </div>
-          </div>
-          <div class="question-card">
-            <div class="question-title">Störende Bänder</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="baender_01" value="keine"> Keine</label>
-              <label class="pill"><input type="radio" name="baender_01" value="ja"> Ja</label>
-            </div>
-          </div>
-          <div class="question-card full-width">
-            <div class="question-title">KFO Situation</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="kfo_01" value="o.p.B."> o.p.B.</label>
-              <label class="pill"><input type="radio" name="kfo_01" value="Auffällig"> Auffällig</label>
-            </div>
-            <div id="kfoOptions_01" class="sub-options">
-              <input type="text" id="kfoText_01" placeholder="Details notieren...">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section full" style="margin-top: 12px;">
-        <div class="label-row"><label class="label">Sonstiges (z. B. Mu, Üz, …)</label></div>
-        <input type="text" id="therapieSonstiges_01" placeholder="optional">
-      </div>
-    </div>
-
-    <div id="box_fuellung" class="main-box">
-      <h2 class="section-title">Füllungstherapie</h2>
-      <div class="grid">
-        <div class="section full">
-          <div class="label-row"><label class="label">Zahn / Zähne</label></div>
-          <input id="toothNumber_f" type="text" placeholder="z. B. 11, 24, 36" />
-        </div>
-
-        <div id="therapieSection_f" class="section full therapieSection">
-          <div class="label-row"><div class="label">Therapie-Details (pro Zahn)</div></div>
-          <div id="dyn_fuellung"></div>
-        </div>
-      </div>
-    </div>
-
-    <template id="tpl_fuellung">
-      <div class="question-grid">
-        <div class="question-card full-width">
-          <div class="question-title">Fläche(n)</div>
-          <input type="text" id="toothSurfaces_f" placeholder="z. B. om, od, mod">
-        </div>
-        <div class="question-card">
-          <div class="question-title">Mehrkostenvereinbarung (MKV)</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="mkv_f" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="mkv_f" value="Nein"> Nein</label>
-          </div>
-          <div id="mkvOptions_f" class="sub-options">
-            <input type="text" id="mkvPrice_f" placeholder="Preis (z. B. 80)">
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">ViPr durchgeführt?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="vipr_f" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="vipr_f" value="Nein"> Nein</label>
-          </div>
-          <div id="viprOptions_f" class="sub-options">
-            <div class="choice-group">
-              <label class="choice"><input type="radio" name="viprResult_f" value="positiv"> <span>positiv</span></label>
-              <label class="choice"><input type="radio" name="viprResult_f" value="negativ"> <span>negativ</span></label>
-            </div>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Anästhesie</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="anaesthesie_f" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="anaesthesie_f" value="Nein"> Nein</label>
-          </div>
-          <div id="anaesthesieOptions_f" class="sub-options">
-            <div class="choice-group">
-              <label class="choice"><input type="checkbox" name="anaeType_f" value="Oberfläche"> <span>Oberfläche</span></label>
-              <label class="choice"><input type="checkbox" name="anaeType_f" value="Infiltration"> <span>Infiltration</span></label>
-              <label class="choice"><input type="checkbox" name="anaeType_f" value="Leitungsanästhesie"> <span>Leitung</span></label>
-              <label class="choice"><input type="checkbox" name="anaeType_f" value="Intraligamentär"> <span>ILA</span></label>
-            </div>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Matrize gelegt?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="matrize_f" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="matrize_f" value="Nein"> Nein</label>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">bMF?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="bmf_f" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="bmf_f" value="Nein"> Nein</label>
-          </div>
-          <div id="bmfOptions_f" class="sub-options">
-            <div class="choice-group">
-              <label class="choice"><input type="radio" name="bmfType_f" value="Retraktionsfaden"> <span>Retraktionsfaden</span></label>
-              <label class="choice"><input type="radio" name="bmfType_f" value="Retraktionspaste"> <span>Retraktionspaste</span></label>
-              <label class="choice"><input type="radio" name="bmfType_f" value="Kofferdam"> <span>Kofferdam</span></label>
-              <label class="choice"><input type="radio" name="bmfType_f" value="Engstand separiert"> <span>Engstand separiert</span></label>
-              <label class="choice">
-                <input type="radio" name="bmfType_f" value="Sonstiges" id="radioBmfOther_f">
-                <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                  <input type="text" id="bmfOtherText_f" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px;">
-                </div>
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Aufbaufüllung?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="aufbau_f" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="aufbau_f" value="Nein"> Nein</label>
-          </div>
-          <div id="aufbauOptions_f" class="sub-options">
-             <div class="yn">
-               <label class="pill"><input type="radio" name="aufbauArt_f" value="Krone"> für Krone</label>
-               <label class="pill"><input type="radio" name="aufbauArt_f" value="Teilkrone"> für Teilkrone</label>
-             </div>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">CP / P</div>
-          <div class="choice-group">
-            <label class="choice"><input type="radio" name="cpp_f" value="CP"> <span>CP</span></label>
-            <label class="choice"><input type="radio" name="cpp_f" value="P"> <span>P</span></label>
-            <label class="choice"><input type="radio" name="cpp_f" value="Keins"> <span>Keins</span></label>
-          </div>
-          <div id="cppOptions_f" class="sub-options">
-            <div class="choice-group">
-              <label class="choice"><input type="radio" name="cppMaterial_f" value="Dycal"> <span>Dycal</span></label>
-              <label class="choice"><input type="radio" name="cppMaterial_f" value="Ultracal"> <span>Ultracal</span></label>
-              <label class="choice"><input type="radio" name="cppMaterial_f" value="Biodentin"> <span>Biodentin</span></label>
-              <label class="choice">
-                <input type="radio" name="cppMaterial_f" value="Sonstiges" id="radioCppOther_f">
-                <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                  <input type="text" id="cppOtherText_f" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px;">
-                </div>
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Zahnfarbe</div>
-          <input type="text" id="zahnfarbe_f" placeholder="z.B. A2, B1">
-        </div>
-        <div class="question-card full-width">
-          <div class="question-title">Material (Mehrfachauswahl)</div>
-          <div class="choice-group" style="grid-template-columns: 1fr 1fr;">
-            <label class="choice"><input type="checkbox" name="material_f" value="Bulk Fill"> <span>Bulk Fill</span></label>
-            <label class="choice"><input type="checkbox" name="material_f" value="Bulk Fill Flow"> <span>Bulk Fill Flow</span></label>
-            <label class="choice"><input type="checkbox" name="material_f" value="Majesty Clearfill"> <span>Majesty Clearfill</span></label>
-            <label class="choice"><input type="checkbox" name="material_f" value="Majesty Clearfill Flow"> <span>Majesty Clearfill Flow</span></label>
-            <label class="choice"><input type="checkbox" name="material_f" value="Ketac"> <span>Ketac</span></label>
-            <label class="choice"><input type="checkbox" name="material_f" value="Riva Light Cure"> <span>Riva Light Cure</span></label>
-            <label class="choice"><input type="checkbox" name="material_f" value="Tetric"> <span>Tetric</span></label>
-            <label class="choice"><input type="checkbox" name="material_f" value="Filtek Easy Match Flow"> <span>Filtek Easy Match Flow</span></label>
-            <label class="choice full-width">
-              <input type="checkbox" name="material_f" value="Sonstiges" id="chkMaterialOther_f">
-              <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                <input type="text" id="materialOtherText_f" placeholder="Sonstiges Material …" disabled style="padding:8px; font-size:14px; width: 100%; border: 1px solid var(--line); border-radius: 8px;">
-              </div>
-            </label>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <div id="box_ex" class="main-box">
-      <h2 class="section-title">Extraktion & Osteotomie</h2>
-      <div class="grid">
-        <div class="section full">
-          <div class="label-row"><div class="label">Eingriffsart</div></div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="procedure_ex" value="Extraktion"> Extraktion</label>
-            <label class="pill"><input type="radio" name="procedure_ex" value="Osteotomie"> Osteotomie</label>
-            <label class="pill"><input type="radio" name="procedure_ex" value="Kombiniert"> Beides (Kombiniert)</label>
-          </div>
-        </div>
-
-        <div class="section full" id="teethSingle_ex" style="display:none;">
-          <div class="label-row"><label class="label">Zahn / Zähne</label></div>
-          <input id="toothNumber_ex" type="text" placeholder="z. B. 14, 15, 16" />
-        </div>
-
-        <div class="section full" id="teethKombi_ex" style="display:none; grid-template-columns:1fr 1fr; gap:18px;">
-          <div>
-            <div class="label-row"><label class="label">Zähne (Extraktion)</label></div>
-            <input id="toothNumber_ex_ext" type="text" placeholder="z. B. 14" />
-          </div>
-          <div>
-            <div class="label-row"><label class="label">Zähne (Osteotomie)</label></div>
-            <input id="toothNumber_ex_ost" type="text" placeholder="z. B. 15" />
-          </div>
-        </div>
-
-        <div id="therapieSection_ex" class="section full therapieSection">
-          <div class="label-row"><div class="label">Therapie-Details (pro Zahn)</div></div>
-          <div id="dyn_ex"></div>
-        </div>
-      </div>
-    </div>
-
-    <template id="tpl_ex">
-      <div class="question-grid">
-        <div class="question-card">
-          <div class="question-title">Anästhesie (Mehrfachwahl)</div>
-          <div class="choice-group">
-            <label class="choice"><input type="checkbox" name="anae_ex" value="Infiltration"> <span>Infiltration</span></label>
-            <label class="choice"><input type="checkbox" name="anae_ex" value="Leitungsanästhesie"> <span>Leitungsanästhesie</span></label>
-            <label class="choice"><input type="checkbox" name="anae_ex" value="Intraligamentär"> <span>Intraligamentär</span></label>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Entfernen vorh. Krone (EKR)</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="ekr_ex" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="ekr_ex" value="Nein"> Nein</label>
-          </div>
-        </div>
-        <div class="question-card wkb-card-x" id="card-xtype_ex">
-          <div class="question-title">Extraktions-Typ</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="xtype_ex" value="X1"> X1</label>
-            <label class="pill"><input type="radio" name="xtype_ex" value="X2"> X2</label>
-            <label class="pill"><input type="radio" name="xtype_ex" value="X3"> X3</label>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Knochen geglättet</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="knochen_ex" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="knochen_ex" value="Nein"> Nein</label>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Wunde mit scharfem Löffel gesäubert?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="loeffel_ex" value="Ja" checked> Ja</label>
-            <label class="pill"><input type="radio" name="loeffel_ex" value="Nein"> Nein</label>
-          </div>
-        </div>
-        <div class="question-card wkb-card-mav" id="card-mav_ex" style="display:none;">
-          <div class="question-title">MAV</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="mav_ex" value="negativ"> negativ</label>
-            <label class="pill"><input type="radio" name="mav_ex" value="positiv"> positiv</label>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Naht</div>
-          <div class="yn" id="nahtControl_ex">
-            <label class="pill"><input type="radio" name="naht_ex" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="naht_ex" value="Nein"> Nein</label>
-          </div>
-          <div id="nahtOptions_ex" class="sub-options">
-            <div class="label-row"><span style="font-size:13px">Anzahl Nähte:</span></div>
-            <input type="number" id="nahtCount_ex" placeholder="z.B. 2" min="1">
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <div id="box_wkb" class="main-box">
-      <h2 class="section-title">Wurzelkanalbehandlung</h2>
-      <div class="grid">
-        <div class="section full">
-          <div class="label-row"><label class="label" for="toothNumber_wkb">Zahn / Zähne</label></div>
-          <input id="toothNumber_wkb" type="text" placeholder="z. B. 11, 24, 36" />
-        </div>
-        
-        <div id="therapieSection_wkb" class="section full therapieSection">
-          <div class="label-row"><div class="label">Therapie-Details (pro Zahn)</div></div>
-          <div id="dyn_wkb"></div>
-        </div>
-      </div>
-    </div>
-
-    <template id="tpl_wkb">
-      <div class="question-grid">
-        <div class="question-card full-width">
-          <div class="question-title">Therapieabschnitt</div>
-          <div class="choice-group" style="grid-template-columns: 1fr 1fr 1fr;">
-            <label class="choice"><input type="radio" name="therapieschritt_wkb" value="WKB"> <span>WKB</span></label>
-            <label class="choice"><input type="radio" name="therapieschritt_wkb" value="Med"> <span>Med</span></label>
-            <label class="choice"><input type="radio" name="therapieschritt_wkb" value="WF"> <span>WF</span></label>
-          </div>
-        </div>
-        <div id="card-wkbart_wkb" class="question-card wkb-card full-width">
-          <div class="question-title">Behandlungsart</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="wkbart_wkb" value="WKB"> WKB</label>
-            <label class="pill"><input type="radio" name="wkbart_wkb" value="Revision"> Revision</label>
-          </div>
-        </div>
-        <div id="card-vipr_wkb" class="question-card wkb-card">
-          <div class="question-title">ViPr durchgeführt?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="vipr_wkb" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="vipr_wkb" value="Nein"> Nein</label>
-          </div>
-          <div id="viprOptions_wkb" class="sub-options">
-            <div class="choice-group">
-              <label class="choice"><input type="radio" name="viprResult_wkb" value="positiv"> <span>positiv</span></label>
-              <label class="choice"><input type="radio" name="viprResult_wkb" value="negativ"> <span>negativ</span></label>
-            </div>
-          </div>
-        </div>
-        <div id="card-anaesthesie_wkb" class="question-card wkb-card">
-          <div class="question-title">Anästhesie</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="anaesthesie_wkb" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="anaesthesie_wkb" value="Nein"> Nein</label>
-          </div>
-          <div id="anaesthesieOptions_wkb" class="sub-options">
-            <div class="choice-group">
-              <label class="choice"><input type="checkbox" name="anaeType_wkb" value="Infiltration"> <span>Infiltration</span></label>
-              <label class="choice"><input type="checkbox" name="anaeType_wkb" value="ILA"> <span>ILA</span></label>
-              <label class="choice"><input type="checkbox" name="anaeType_wkb" value="Leitung"> <span>Leitung</span></label>
-            </div>
-          </div>
-        </div>
-        <div id="card-kofferdam_wkb" class="question-card wkb-card">
-            <div class="question-title">Kofferdam gelegt?</div>
-            <div class="yn">
-                <label class="pill"><input type="radio" name="kofferdam_wkb" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="kofferdam_wkb" value="Nein"> Nein</label>
-            </div>
-        </div>
-        <div id="card-diagnose_wkb" class="question-card wkb-card">
-          <div class="question-title">Diagnose</div>
-          <div class="choice-group">
-            <label class="choice"><input type="radio" name="diagnose_wkb" value="Par. apic."> <span>Par. apic.</span></label>
-            <label class="choice"><input type="radio" name="diagnose_wkb" value="Caries profunda"> <span>Caries profunda</span></label>
-            <label class="choice"><input type="radio" name="diagnose_wkb" value="Akute Pulpitis"> <span>Akute Pulpitis</span></label>
-            <label class="choice"><input type="radio" name="diagnose_wkb" value="reinfizierte WF"> <span>reinfizierte WF</span></label>
-            <label class="choice">
-              <input type="radio" name="diagnose_wkb" value="Sonstiges" id="radioOther_wkb"> 
-              <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                <input type="text" id="otherText_wkb" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; border:1px solid var(--line); border-radius:8px; width:100%;">
-              </div>
-            </label>
-          </div>
-        </div>
-        <div id="card-mkv_wkb" class="question-card wkb-card">
-          <div class="question-title">Mehrkostenvereinbarung</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="mkv_wkb" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="mkv_wkb" value="Nein"> Nein</label>
-          </div>
-          <div id="mkvOptions_wkb" class="sub-options">
-            <input type="text" id="mkvPrice_wkb" placeholder="Preis (z. B. 80)" style="margin-top:8px;">
-          </div>
-        </div>
-        <div id="card-praeendo_wkb" class="question-card wkb-card">
-          <div class="question-title">Präendodontischer Aufbau</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="praeEndo_wkb" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="praeEndo_wkb" value="Nein"> Nein</label>
-          </div>
-        </div>
-        <div id="card-verfahren_wkb" class="question-card wkb-card">
-          <div class="question-title">Verfahren</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="verfahren_wkb" value="VitE"> VitE</label>
-            <label class="pill"><input type="radio" name="verfahren_wkb" value="Trep"> Trep</label>
-          </div>
-        </div>
-        <div id="card-wf_mitgemacht_wkb" class="question-card wkb-card">
-          <div class="question-title">WF gleich mitgemacht?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="wfMitgemacht_wkb" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="wfMitgemacht_wkb" value="Nein"> Nein</label>
-          </div>
-        </div>
-        <div id="card-med_wkb" class="question-card wkb-card">
-          <div class="question-title">Med</div>
-          <div class="choice-group">
-            <label class="choice"><input type="radio" name="med_wkb" value="Ultracal"> <span>Ultracal</span></label>
-            <label class="choice"><input type="radio" name="med_wkb" value="Ledermix"> <span>Ledermix</span></label>
-            <label class="choice"><input type="radio" name="med_wkb" value="CHX-Papierspitze"> <span>CHX-Papierspitze</span></label>
-            <label class="choice">
-              <input type="radio" name="med_wkb" value="Sonstiges" id="radioMedOther_wkb">
-              <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                <input type="text" id="medOtherText_wkb" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; border:1px solid var(--line); border-radius:8px; width:100%;">
-              </div>
-            </label>
-          </div>
-        </div>
-        <div id="card-wf_wkb" class="question-card wkb-card">
-          <div class="question-title">WF</div>
-          <div class="choice-group">
-            <label class="choice"><input type="radio" name="wf_wkb" value="Guttapercha"> <span>Guttapercha</span></label>
-            <label class="choice"><input type="radio" name="wf_wkb" value="Guttapercha (warmvertikal)"> <span>Guttapercha (warmvertikal)</span></label>
-          </div>
-        </div>
-        <div id="card-sealer_wkb" class="question-card wkb-card">
-          <div class="question-title">Sealer</div>
-          <div class="choice-group">
-            <label class="choice"><input type="radio" name="sealer_wkb" value="AH Plus Jet"> <span>AH Plus Jet</span></label>
-            <label class="choice"><input type="radio" name="sealer_wkb" value="Bioceramischen Sealer"> <span>Bioceramischen Sealer</span></label>
-            <label class="choice"><input type="radio" name="sealer_wkb" value="BioRoot"> <span>BioRoot</span></label>
-            <label class="choice">
-              <input type="radio" name="sealer_wkb" value="Sonstiges" id="radioSealerOther_wkb">
-              <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                <input type="text" id="sealerOtherText_wkb" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; border:1px solid var(--line); border-radius:8px; width:100%;">
-              </div>
-            </label>
-          </div>
-        </div>
-        <div id="card-kanaele_wkb" class="question-card wkb-card full-width">
-          <div class="question-title">Wieviele Kanäle?</div>
-          <input type="text" id="kanalauswahl_wkb" placeholder="Zahl eingeben (z.B. 3)">
-          <div class="sub-options show" style="display:block; margin-top:12px; border-top:1px dashed var(--line);">
-            <div style="margin-top:12px;">
-              <div class="question-title" style="font-size:14px; margin-bottom:8px;">Rö-Messaufnahme</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="roeMessaufnahme_wkb" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="roeMessaufnahme_wkb" value="Nein"> Nein</label>
-              </div>
-            </div>
-            <div id="kanalTexteWrap_wkb" style="margin-top:14px;"></div>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <div id="box_schiene" class="main-box">
-      <h2 class="section-title">Schienentherapie</h2>
-      <div class="section">
-        <div class="label-row"><div class="label">Art der Behandlung</div></div>
-        <div class="choice-group" style="grid-template-columns: 1fr 1fr 1fr;">
-          <label class="choice"><input type="radio" name="behandlungsart_s" value="Abdruck"> <span>Schienenabdruck</span></label>
-          <label class="choice"><input type="radio" name="behandlungsart_s" value="Einsetzen"> <span>Schiene einsetzen</span></label>
-          <label class="choice"><input type="radio" name="behandlungsart_s" value="Kontrolle"> <span>Schienenkontrolle</span></label>
-        </div>
-      </div>
-
-      <div id="sec-abdruck_s" class="dynamic-section section">
-        <div class="question-grid">
-          <div class="question-card full-width">
-            <div class="question-title">Diagnose</div>
-            <div class="choice-group" style="grid-template-columns: 1fr 1fr;">
-              <label class="choice"><input type="radio" name="diagnose_abdruck_s" value="Bruxismus"> <span>Bruxismus</span></label>
-              <label class="choice"><input type="radio" name="diagnose_abdruck_s" value="Myoarthropathie"> <span>Myoarthropathie</span></label>
-              <label class="choice full-width" style="align-items: flex-start; flex-direction: column;">
-                <div style="display:flex; gap: 8px; align-items: center;">
-                  <input type="radio" name="diagnose_abdruck_s" id="cmdRadio_s" value="CMD"> <span>CMD</span>
-                </div>
-                <div id="cmdOptions_s" class="sub-options" style="width: 100%; border: none; padding-top: 0; margin-top: 8px;">
-                  <div class="choice-group">
-                    <label class="choice"><input type="radio" name="cmd_type_s" value="CD1a"> <span>CD1a (Kiefergelenk-/Muskelstörung)</span></label>
-                    <label class="choice"><input type="radio" name="cmd_type_s" value="CD1b"> <span>CD1b (Muskeldysbalancen, Muskelhyper-/hypotonie)</span></label>
-                    <label class="choice"><input type="radio" name="cmd_type_s" value="CD1c"> <span>CD1c (Muskelspannungsstörungen, gestörte Beweglichkeit)</span></label>
-                    <label class="choice"><input type="radio" name="cmd_type_s" value="CD1d"> <span>CD1d (Gelenkfunktionsstörung, Gelenkblockierung)</span></label>
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <div class="question-card">
-            <div class="question-title">Kiefer</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="kiefer_abdruck_s" value="OK"> OK</label>
-              <label class="pill"><input type="radio" name="kiefer_abdruck_s" value="UK"> UK</label>
-            </div>
-          </div>
-
-          <div class="question-card">
-            <div class="question-title">Abdruck-Art</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="abdruckart_s" value="Scan"> Scan</label>
-              <label class="pill"><input type="radio" name="abdruckart_s" value="Alginatabdruck"> Alginatabdruck</label>
-            </div>
-            <div id="alginatOptions_s" class="sub-options">
-              <input type="text" id="loeffelgroesse_s" placeholder="Löffelgröße (z.B. M, L, 3)">
-            </div>
-          </div>
-
-          <div class="question-card full-width">
-            <div class="question-title">Labor</div>
-            <input type="text" id="labor_name_s" placeholder="Name des Labors">
-          </div>
-        </div>
-      </div>
-
-      <div id="sec-einsetzen_s" class="dynamic-section section">
-        <div class="question-grid">
-          
-          <div class="question-card full-width">
-            <div class="question-title">Weiteres Vorgehen</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="aktion_einsetzen_s" value="eingesetzt"> Schiene eingesetzt</label>
-              <label class="pill"><input type="radio" name="aktion_einsetzen_s" value="labor" id="aktionLabor_s"> Zurück ins Labor</label>
-            </div>
-          </div>
-
-          <div id="einsetzenDetails_s" style="display: none; grid-column: 1 / -1;" class="question-grid">
-            <div class="question-card">
-              <div class="question-title">Schienensitz</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="sitz_einsetzen_s" value="optimal"> Optimal</label>
-                <label class="pill"><input type="radio" name="sitz_einsetzen_s" value="suboptimal"> Suboptimal</label>
-              </div>
-              <div id="sitzSuboptimalOptions_s" class="sub-options">
-                <div class="yn" style="margin-bottom: 10px;">
-                  <label class="pill"><input type="radio" name="sitz_art_s" value="zu fest"> Zu fest</label>
-                  <label class="pill"><input type="radio" name="sitz_art_s" value="zu locker"> Zu locker</label>
-                </div>
-                <div id="sitzFestOptions_s" class="sub-options" style="border:none; padding-top:0;">
-                  <input type="text" id="einschleifen_sitz_s" placeholder="Einschleifmaßnahmen Regio (z.B. 16, 26)">
-                </div>
-              </div>
-            </div>
-
-            <div class="question-card">
-              <div class="question-title">Schienenokklusion</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="okklusion_einsetzen_s" value="optimal"> Optimal</label>
-                <label class="pill"><input type="radio" name="okklusion_einsetzen_s" value="suboptimal"> Suboptimal</label>
-              </div>
-              <div id="okklusionSuboptimalOptions_s" class="sub-options">
-                <input type="text" id="einschleifen_okklusion_s" placeholder="Einschleifmaßnahmen Regio...">
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <div id="sec-kontrolle_s" class="dynamic-section section">
-        <div class="question-grid">
-          
-          <div class="question-card">
-            <div class="question-title">Kopf-/Nackenbeschwerden</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="beschwerden_kontrolle_s" value="abklingend"> Abklingend</label>
-              <label class="pill"><input type="radio" name="beschwerden_kontrolle_s" value="verstärkt"> Verstärkt</label>
-            </div>
-          </div>
-
-          <div class="question-card">
-            <div class="question-title">Schienensitz</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="sitz_kontrolle_s" value="optimal"> Optimal</label>
-              <label class="pill"><input type="radio" name="sitz_kontrolle_s" value="suboptimal"> Suboptimal</label>
-            </div>
-            <div id="sitzKontrolleSuboptimal_s" class="sub-options">
-              <input type="text" id="einschleifen_sitz_kontrolle_s" placeholder="In welcher Regio eingeschliffen? (z.B. 16, 26)">
-            </div>
-          </div>
-
-          <div class="question-card">
-            <div class="question-title">Spannung d. Schiene?</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="spannung_kontrolle_s" value="Ja"> Ja</label>
-              <label class="pill"><input type="radio" name="spannung_kontrolle_s" value="Nein"> Nein</label>
-            </div>
-            <div id="spannungOptions_s" class="sub-options">
-              <input type="text" id="spannung_wo_s" placeholder="Wo? (z.B. Front)">
-            </div>
-          </div>
-
-          <div class="question-card">
-            <div class="question-title">Kontaktpunkte auf Schiene</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="kontaktpunkte_s" value="optimal"> Optimal</label>
-              <label class="pill"><input type="radio" name="kontaktpunkte_s" value="suboptimal"> Suboptimal</label>
-            </div>
-            <div id="kontaktpunkteSuboptimal_s" class="sub-options">
-              <input type="text" id="einschleifen_kontaktpunkte_s" placeholder="In welcher Regio eingeschliffen? (z.B. 14-16)">
-            </div>
-          </div>
-
-          <div class="question-card">
-            <div class="question-title">Front-/Eckzahnführung</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="fuehrung_s" value="vorhanden"> Vorhanden</label>
-              <label class="pill"><input type="radio" name="fuehrung_s" value="nicht vorhanden"> Nicht vorhanden</label>
-            </div>
-          </div>
-
-          <div class="question-card">
-            <div class="question-title">Physio verordnet/ausgestellt?</div>
-            <div class="yn">
-              <label class="pill"><input type="radio" name="physio_s" value="Ja"> Ja</label>
-              <label class="pill"><input type="radio" name="physio_s" value="Nein"> Nein</label>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <div id="box_cerec" class="main-box">
-      <h2 class="section-title">Cerec (Krone / Teilkrone / Brücke)</h2>
-      <div class="grid">
-        
-        <div class="section full">
-          <div class="label-row"><div class="label">Art der Versorgung</div></div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="procedure_c" value="Krone"> Krone</label>
-            <label class="pill"><input type="radio" name="procedure_c" value="Teilkrone"> Teilkrone</label>
-            <label class="pill"><input type="radio" name="procedure_c" value="Brücke"> Brücke</label>
-            <label class="pill"><input type="radio" name="procedure_c" value="Kombiniert"> Kombiniert</label>
-          </div>
-        </div>
-
-        <div class="section full" id="teethSingle_c" style="display:none;">
-          <div class="label-row"><label class="label">Zahn / Zähne (bzw. Brücken-Spanne)</label></div>
-          <input id="toothNumber_c" type="text" placeholder="z. B. 14, 15 oder 14-16 für Brücken" />
-        </div>
-
-        <div class="section full" id="teethKombi_c" style="display:none; grid-template-columns: 1fr 1fr 1fr; gap: 18px;">
-          <div>
-            <div class="label-row"><label class="label">Zähne (Krone)</label></div>
-            <input id="toothNumber_c_krone" type="text" placeholder="z. B. 14" />
-          </div>
-          <div>
-            <div class="label-row"><label class="label">Zähne (Teilkrone)</label></div>
-            <input id="toothNumber_c_teilkrone" type="text" placeholder="z. B. 15" />
-          </div>
-          <div>
-            <div class="label-row"><label class="label">Zähne (Brücke)</label></div>
-            <input id="toothNumber_c_bruecke" type="text" placeholder="z. B. 14-16" />
-          </div>
-        </div>
-
-        <div class="section full">
-           <div class="question-grid">
-               <div class="question-card">
-                 <div class="question-title">Anästhesie durchgeführt?</div>
-                 <div class="yn">
-                   <label class="pill"><input type="radio" name="anaesthesie_c" value="Ja"> Ja</label>
-                   <label class="pill"><input type="radio" name="anaesthesie_c" value="Nein"> Nein</label>
-                 </div>
-                 <div id="anaesthesieOptions_c" class="sub-options">
-                   <div class="choice-group">
-                     <label class="choice"><input type="checkbox" name="anae_type_c" value="Infiltration"> <span>Infiltration</span></label>
-                     <label class="choice"><input type="checkbox" name="anae_type_c" value="Leitungsanästhesie"> <span>Leitungsanästhesie</span></label>
-                     <label class="choice"><input type="checkbox" name="anae_type_c" value="Intraligamentär"> <span>Intraligamentär (ILA)</span></label>
-                   </div>
-                 </div>
-               </div>
-               <div class="question-card">
-                 <div class="question-title">Retraktion</div>
-                 <div class="choice-group">
-                   <label class="choice"><input type="radio" name="retraktion_c" value="Retraktionsfaden"> <span>Retraktionsfaden</span></label>
-                   <label class="choice"><input type="radio" name="retraktion_c" value="Retraktionspaste"> <span>Retraktionspaste</span></label>
-                   <label class="choice"><input type="radio" name="retraktion_c" value="Keine"> <span>Keine</span></label>
-                 </div>
-                 <div id="fadenOptions_c" class="sub-options">
-                   <input type="text" id="fadenGroesse_c" placeholder="Fadengröße (z.B. 00)">
-                 </div>
-               </div>
-           </div>
-        </div>
-
-        <div id="therapieSection_c" class="section full therapieSection">
-          <div class="label-row"><div class="label">Therapie-Details</div></div>
-          <div id="dyn_cerec"></div>
-        </div>
-      </div>
-    </div>
-
-    <template id="tpl_cerec">
-      <div class="question-grid">
-        <div class="question-card">
-          <div class="question-title">EKR?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="ekr_c" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="ekr_c" value="Nein"> Nein</label>
-          </div>
-        </div>
-        <div class="question-card full-width">
-          <div class="question-title">Restaurationsmaterial (CAD)</div>
-            <div class="choice-group" style="grid-template-columns: 1fr 1fr 1fr;">
-              <label class="choice"><input type="radio" name="restMat_c" value="e.max"> <span>e.max</span></label>
-              <label class="choice"><input type="radio" name="restMat_c" value="Empress"> <span>Empress</span></label>
-              <label class="choice"><input type="radio" name="restMat_c" value="Telio CAD"> <span>Telio CAD</span></label>
-              <label class="choice full-width" style="grid-column: 1 / -1;">
-                <input type="radio" name="restMat_c" value="Sonstiges" id="radioRestMatOther_c"> 
-                <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                  <input type="text" id="restMatOtherText_c" placeholder="Sonstiges (Material eingeben)" disabled style="padding:8px; font-size:14px; width: 100%; border: 1px solid var(--line); border-radius: 8px;">
-                </div>
-              </label>
-            </div>
-        </div>
-        <div class="question-card full-width">
-          <div class="question-title">Wurzelstift gesetzt?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="stift_c" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="stift_c" value="Nein"> Nein</label>
-          </div>
-          <div id="stiftOptions_c" class="sub-options">
-            <div class="question-title" style="margin-top:10px; font-size:14px;">Stift-Art</div>
-            <div class="choice-group" style="grid-template-columns: 1fr 1fr;">
-              <label class="choice"><input type="radio" name="stiftArt_c" value="Titan"> <span>Titan</span></label>
-              <label class="choice"><input type="radio" name="stiftArt_c" value="Glasfaser"> <span>Glasfaser</span></label>
-              <label class="choice full-width">
-                <input type="radio" name="stiftArt_c" value="Sonstiges" id="radioStiftArtOther_c"> 
-                <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                  <input type="text" id="stiftArtOtherText_c" placeholder="Sonstiges (Material)" disabled style="padding:8px; font-size:14px; width: 100%; border: 1px solid var(--line); border-radius: 8px;">
-                </div>
-              </label>
-            </div>
-
-            <div class="question-title" style="margin-top:16px; font-size:14px;">Wurzelstift – Maße / Zement</div>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-              <input type="text" id="stiftIso_c" placeholder="ISO-Größe">
-              <input type="text" id="stiftLaenge_c" placeholder="Länge (in mm)">
-            </div>
-            <div id="stiftKanalWrap_c" style="margin-top:10px; display:none;">
-              <input type="text" id="stiftKanal_c" placeholder="In welchen Kanal wurde gebohrt? (z.B. palatinal)">
-            </div>
-            
-            <div class="question-title" style="margin-top:16px; font-size:14px;">Zement/Kleber</div>
-            <div class="choice-group" style="grid-template-columns: 1fr 1fr;">
-              <label class="choice"><input type="radio" name="stiftZement_c" value="RelyX"> <span>RelyX</span></label>
-              <label class="choice"><input type="radio" name="stiftZement_c" value="Fuji"> <span>Fuji</span></label>
-              <label class="choice full-width">
-                <input type="radio" name="stiftZement_c" value="Sonstiges" id="radioStiftZementOther_c"> 
-                <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                  <input type="text" id="stiftZementOtherText_c" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; width: 100%; border: 1px solid var(--line); border-radius: 8px;">
-                </div>
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="question-card">
-          <div class="question-title">Zahnfarbe</div>
-          <input type="text" id="zahnfarbe_c" placeholder="z.B. A2, B1">
-        </div>
-        <div class="question-card">
-          <div class="question-title">Blockgröße</div>
-          <input type="text" id="blockgroesse_c" placeholder="z.B. C14 (bzw. B32 bei Brücken)">
-        </div>
-        <div class="question-card" id="card-tryin_c">
-          <div class="question-title">TryIn Paste verwendet?</div>
-          <div class="yn">
-            <label class="pill"><input type="radio" name="tryin_c" value="Ja"> Ja</label>
-            <label class="pill"><input type="radio" name="tryin_c" value="Nein"> Nein</label>
-          </div>
-          <div id="tryinOptions_c" class="sub-options">
-            <div class="choice-group" style="grid-template-columns: 1fr 1fr 1fr;">
-              <label class="choice"><input type="radio" name="tryin_type_c" value="light"> <span>light</span></label>
-              <label class="choice"><input type="radio" name="tryin_type_c" value="neutral"> <span>neutral</span></label>
-              <label class="choice"><input type="radio" name="tryin_type_c" value="warm"> <span>warm</span></label>
-            </div>
-          </div>
-        </div>
-        <div class="question-card full-width">
-          <div class="question-title">Befestigung</div>
-          <div class="choice-group" style="grid-template-columns: 1fr 1fr;">
-            <label class="choice"><input type="radio" name="befestigung_c" value="Variolink Esthetik"> <span>Variolink Esthetik</span></label>
-            <label class="choice"><input type="radio" name="befestigung_c" value="RelyX"> <span>RelyX</span></label>
-            <label class="choice"><input type="radio" name="befestigung_c" value="Fuji"> <span>Fuji</span></label>
-            <label class="choice">
-              <input type="radio" name="befestigung_c" value="Sonstiges" id="radioBefestigungOther_c">
-              <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                <input type="text" id="befestigungOtherText_c" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; width: 100%; border: 1px solid var(--line); border-radius: 8px;">
-              </div>
-            </label>
-          </div>
-          <div id="variolinkOptions_c" class="sub-options">
-             <div class="question-title" style="font-size:14px; margin-bottom:8px;">Variolink Farbe</div>
-             <div class="choice-group" style="grid-template-columns: 1fr 1fr 1fr;">
-               <label class="choice"><input type="radio" name="variolink_c" value="light"> <span>light</span></label>
-               <label class="choice"><input type="radio" name="variolink_c" value="neutral"> <span>neutral</span></label>
-               <label class="choice"><input type="radio" name="variolink_c" value="warm"> <span>warm</span></label>
-             </div>
-          </div>
-        </div>
-      </div>
-    </template>
-    <template id="tpl_impl_op">
-      <div class="question-grid">
-        <div class="question-card full-width" style="background:#fff; border-color:var(--accent);">
-          <div class="question-title">Kategorie & Augmentation</div>
-          <div class="grid" style="gap:10px;">
-            <div class="sinuslift-box"><label style="font-size:13px;color:var(--muted)">Sinuslift</label>
-              <div class="choice-group">
-                <label class="choice"><input type="radio" name="op_sl" value="Nein" checked><span>Nein</span></label>
-                <label class="choice sl-intern-ext"><input type="radio" name="op_sl" value="Intern"><span>Intern</span></label>
-                <label class="choice sl-intern-ext"><input type="radio" name="op_sl" value="Extern"><span>Extern</span></label>
-              </div>
-            </div>
-            <div><label style="font-size:13px;color:var(--muted)">Membran/Augmentation</label>
-              <div class="yn" style="margin-top:8px;">
-                <label class="pill"><input type="radio" name="op_aug" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="op_aug" value="Nein" checked> Nein</label>
-              </div>
-            </div>
-            <div class="full-width"><label style="font-size:13px;color:var(--muted)">Ohne Alles</label>
-              <div class="yn" style="margin-top:8px;">
-                <label class="pill"><input type="radio" name="op_ohne" value="Ja" checked> Ja</label>
-                <label class="pill"><input type="radio" name="op_ohne" value="Nein"> Nein</label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="question-card full-width mat-card" id="mat" style="display:none;">
-          <div class="question-title">Materialien (Mind. 1 wählen)</div>
-          <div class="choice-group" style="grid-template-columns:1fr 1fr;">
-            <label class="choice"><input type="checkbox" name="mat_chk" value="Augmentation mit MinerOssX"><span>Augmentation (MinerOssX)</span></label>
-            <label class="choice"><input type="checkbox" name="mat_chk" value="autologe Fibrinmembran (P.R.G.F.)"><span>Autologe Membran (PRGF)</span></label>
-            <label class="choice mat-ext" style="display:none;"><input type="checkbox" name="mat_chk" value="NovoMatrx"><span>NovoMatrx</span></label>
-            <label class="choice mat-ext" style="display:none;"><input type="checkbox" name="mat_chk" value="Argonautmembran 15 x 20"><span>Argonautmembran</span></label>
-            <label class="choice full-width"><input type="checkbox" name="mat_chk" value="Sonstiges" id="mat_sonst_chk">
-              <div style="flex:1; display:flex; gap:10px; align-items:center;"><input type="text" id="mat_sonst_text" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; width: 100%; border: 1px solid var(--line); border-radius: 8px;"></div>
-            </label>
-          </div>
-        </div>
-        <div class="question-card full-width blut-card" id="blut" style="display:none;">
-          <div class="question-title">Blutabnahme</div>
-          <div style="display:flex; gap:10px;"><input type="text" id="blut_regio" placeholder="Aus Vene (Regio z.B. Handrücken li)"><input type="number" id="blut_roh" placeholder="Anzahl Röhrchen"></div>
-        </div>
-        <div class="question-card"><div class="question-title">Anästhesie</div><div class="choice-group"><label class="choice"><input type="checkbox" name="anae" value="Infiltration"><span>Infiltration</span></label><label class="choice"><input type="checkbox" name="anae" value="Leitung"><span>Leitung</span></label></div><div style="margin-top:10px; display:flex; gap:8px;"><input type="number" id="ubi100" placeholder="Amp. 1:100.000 (0 = keine)"><input type="number" id="ubi200" placeholder="Amp. 1:200.000 (0 = keine)"></div></div>
-        <div class="question-card"><div class="question-title">Implantat & Gewinde</div><div class="yn" style="margin-bottom:10px;"><label style="font-size:14px;width:100%;">Gewinde geschnitten?</label><label class="pill"><input type="radio" name="gewinde" value="Ja"> Ja</label><label class="pill"><input type="radio" name="gewinde" value="Nein"> Nein</label></div><div style="display:flex; gap:8px;"><input type="text" id="impl_durch" placeholder="Durchm. (mm)"><input type="text" id="impl_lang" placeholder="Länge (mm)"></div></div>
-        <div class="question-card"><div class="question-title">Chirurgie Details</div><label style="font-size:14px;display:block;margin-bottom:6px;">Periostschlitzung?</label><div class="yn" style="margin-bottom:12px;"><label class="pill"><input type="radio" name="periost" value="Ja"> Ja</label><label class="pill"><input type="radio" name="periost" value="Nein"> Nein</label></div><label style="font-size:14px;display:block;margin-bottom:6px;margin-top:12px;">Gingivaformer eingesetzt?</label><div class="yn" style="margin-bottom:12px;"><label class="pill"><input type="radio" name="op_gingivaformer" value="Ja"> Ja</label><label class="pill"><input type="radio" name="op_gingivaformer" value="Nein" checked> Nein</label></div><input type="number" id="naht" placeholder="Anzahl Nähte (z.B. 2)" min="1"></div>
-        <div class="question-card"><div class="question-title">Kontrolle & Knochen</div><label style="font-size:14px;display:block;margin-bottom:6px;">Röntgen-Kontrolle?</label><div class="yn" style="margin-bottom:12px;"><label class="pill"><input type="radio" name="roe" value="Einzelzahnaufnahme"> Einzel</label><label class="pill"><input type="radio" name="roe" value="1/2 OPG"> ½ OPG</label><label class="pill"><input type="radio" name="roe" value="OPG"> OPG</label><label class="pill"><input type="radio" name="roe" value="Nein"> Nein</label></div><div class="yn"><label class="pill"><input type="radio" name="knochen" value="D1"> D1</label><label class="pill"><input type="radio" name="knochen" value="D2"> D2</label><label class="pill"><input type="radio" name="knochen" value="D3"> D3</label><label class="pill"><input type="radio" name="knochen" value="D4"> D4</label></div></div>
-      </div>
-    </template>
-    <div id="box_implantate" class="main-box">
-      <h2 class="section-title">Implantate</h2>
-      <div class="grid">
-        <div class="section full">
-          <div class="label-row"><div class="label">Behandlungsart</div></div>
-          <div class="choice-group" style="grid-template-columns: 1fr 1fr 1fr;">
-            <label class="choice"><input type="radio" name="mainType_impl" value="op"> <span>Implantat-OP</span></label>
-            <label class="choice"><input type="radio" name="mainType_impl" value="freilegung"> <span>Freilegung</span></label>
-            <label class="choice"><input type="radio" name="mainType_impl" value="ze"> <span>Versorgung mit ZE</span></label>
-          </div>
-        </div>
-
-        <div id="zeLaborSection_impl" class="section full" style="display:none;">
-          <div class="question-grid">
-            <div class="question-card">
-              <div class="question-title">Labor</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="labor_impl" value="Eigenlabor"> Eigenlabor</label>
-                <label class="pill"><input type="radio" name="labor_impl" value="Fremdlabor"> Fremdlabor</label>
-              </div>
-            </div>
-            
-            <div class="question-card">
-              <div class="question-title">Versorgung</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="zeVersorgung_impl" value="Krone" checked> Krone</label>
-                <label class="pill"><input type="radio" name="zeVersorgung_impl" value="Brücke"> Brücke</label>
-                <label class="pill"><input type="radio" name="zeVersorgung_impl" value="Kombiniert"> Kombiniert</label>
-              </div>
-            </div>
-
-            <div id="zeOptionsContainer_impl" class="question-card full-width sub-options">
-              <div class="question-title">Art der Leistung (Eigenlabor)</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="zeArt_impl" value="Scan"> Scan</label>
-                <label class="pill"><input type="radio" name="zeArt_impl" value="Einsetzen"> Einsetzen</label>
-              </div>
-            </div>
-
-            <div id="zeBrueckeScanContainer_impl" class="question-card full-width sub-options" style="display:none;">
-              <div class="question-title">Brücke: Scanbody oder Abutments?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="zeBrueckeScan_impl" value="Scanbody"> Scanbody</label>
-                <label class="pill"><input type="radio" name="zeBrueckeScan_impl" value="Abutments"> Abutments</label>
-              </div>
-            </div>
-
-            <div id="zeFremdlaborOptions_impl" class="sub-options full-width" style="display:none; margin-top: 12px;">
-              <div class="question-grid">
-                
-                <div class="question-card">
-                  <div class="question-title">Methode</div>
-                  <div class="yn">
-                    <label class="pill"><input type="radio" name="ze_methode_impl" value="Abformung" checked> Abformung</label>
-                    <label class="pill"><input type="radio" name="ze_methode_impl" value="Scan"> Scan</label>
-                  </div>
-                </div>
-
-                <div class="question-card">
-                  <div class="question-title">Labordetails</div>
-                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                    <input type="text" id="ze_laborname_impl" placeholder="Laborname">
-                    <input type="text" id="ze_zahnfarbe_impl" placeholder="Zahnfarbe">
-                    <input type="text" id="ze_legierung_impl" placeholder="Legierung (z.B. NEM)" style="grid-column: 1 / -1;">
-                  </div>
-                </div>
-
-                <div id="impl_abformung_wrapper" class="question-grid full-width" style="padding:0; gap:14px;">
-                  <div class="question-card">
-                    <div class="question-title">Abformung</div>
-                    <div class="yn">
-                      <label class="pill"><input type="radio" name="ze_abformung_impl" value="Offene"> Offene</label>
-                      <label class="pill"><input type="radio" name="ze_abformung_impl" value="Geschlossene"> Geschl.</label>
-                    </div>
-                  </div>
-                  <div class="question-card">
-                    <div class="question-title">Löffel</div>
-                    <div class="yn">
-                      <label class="pill"><input type="radio" name="ze_loeffel_impl" value="Konfektioniert"> Konf.</label>
-                      <label class="pill"><input type="radio" name="ze_loeffel_impl" value="Laborgefertigt"> Labor</label>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="regioSection_impl" class="section full" style="display:none;">
-          <div class="label-row"><div class="label">Regio</div></div>
-          
-          <div id="impl_regio_single" style="display:flex; gap:12px; align-items:center;">
-            <input type="text" id="toothInput_impl" placeholder="z.B. 14, 15, 26, 36" style="flex:1;">
-            <button id="generateFormsBtn_impl" class="toggle-btn" type="button" style="padding: 14px 16px; margin-top:0;">Formulare erzeugen</button>
-          </div>
-          
-          <div id="impl_regio_kombi" style="display:none; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom: 12px;">
-            <div><div class="label" style="font-size:13px; margin-bottom: 6px;">Krone</div><input type="text" id="impl_k_zahn" placeholder="z.B. 14, 25"></div>
-            <div><div class="label" style="font-size:13px; margin-bottom: 6px;">Brücke</div><input type="text" id="impl_b_zahn" placeholder="z.B. 15-17"></div>
-            <div style="grid-column: 1 / -1;"><button id="generateFormsBtn_impl_kombi" class="toggle-btn" type="button" style="padding: 14px 16px; width: 100%; margin:0;">Formulare erzeugen</button></div>
-          </div>
-          
-          <div id="teethContainer_impl" class="tooth-container"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="box_prothetik" class="main-box">
-      <h2 class="section-title">Prothetik</h2>
-      <div class="grid">
-        <div class="section full">
-          <div class="label-row"><div class="label">Behandlungsart</div></div>
-          <div class="choice-group cols-2">
-            <label class="choice"><input type="radio" name="mainType_p" value="totu"> <span>TO/TU</span></label>
-            <label class="choice"><input type="radio" name="mainType_p" value="mogu"> <span>MOGU</span></label>
-            <label class="choice"><input type="radio" name="mainType_p" value="knopf"> <span>Kugelknopfanker</span></label>
-            <label class="choice"><input type="radio" name="mainType_p" value="praep"> <span>Präp für Fremdlabor</span></label>
-            <label class="choice"><input type="radio" name="mainType_p" value="interim"> <span>Interimsprothese</span></label>
-            <label class="choice"><input type="radio" name="mainType_p" value="rep"> <span>Reparatur / Unterfütterung</span></label>
-          </div>
-        </div>
-
-        <div id="therapieSection_p" class="section full therapieSection">
-          <div class="label-row"><div class="label">Details</div></div>
-          
-          <div class="question-grid">
-            <div id="card-sub-totu-mogu_p" class="question-card full-width">
-              <div class="question-title">Schritt (TO/TU & MOGU)</div>
-              <div class="choice-group cols-2">
-                <label class="choice"><input type="radio" name="subType_p" value="situ"> <span>Situ-Abformung</span></label>
-                <label class="choice"><input type="radio" name="subType_p" value="fu"> <span>FU-Abformung</span></label>
-                <label class="choice"><input type="radio" name="subType_p" value="biss"> <span>Bissnahme</span></label>
-                <label class="choice"><input type="radio" name="subType_p" value="einprobe"> <span>Einprobe</span></label>
-                <label class="choice"><input type="radio" name="subType_p" value="fertig"> <span>Fertigstellung</span></label>
-              </div>
-            </div>
-
-            <div id="card-sub-knopf_p" class="question-card full-width">
-              <div class="question-title">Schritt (Knopfanker)</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="subType_p" value="anker_abformung"> Abformung für Anker</label>
-                <label class="pill"><input type="radio" name="subType_p" value="anker_ze"> Einsetzen/Überabformung</label>
-              </div>
-            </div>
-
-            <div id="card-sub-praep_p" class="question-card full-width">
-              <div class="question-title">Schritt (Präp Fremdlabor)</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="subType_p" value="praep_abformung"> Abformung</label>
-                <label class="pill"><input type="radio" name="subType_p" value="praep_scan"> Scan</label>
-                <label class="pill"><input type="radio" name="subType_p" value="praep_fertig"> Fertigstellung</label>
-              </div>
-            </div>
-
-            <div id="card-sub-interim_p" class="question-card full-width">
-              <div class="question-title">Schritt (Interimsprothese)</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="subType_p" value="interim_abformung"> Abformung</label>
-                <label class="pill"><input type="radio" name="subType_p" value="interim_einsetzen"> Einsetzen</label>
-              </div>
-            </div>
-
-            <div id="card-sub-rep_p" class="question-card full-width">
-              <div class="question-title">Art der Reparatur</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="subType_p" value="rep_rep"> Reparatur</label>
-                <label class="pill"><input type="radio" name="subType_p" value="rep_uf"> Unterfütterung (UF)</label>
-              </div>
-            </div>
-
-            <div id="card-kiefer_p" class="question-card">
-              <div class="question-title">Kiefer</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="kiefer_p" value="OK"> OK</label>
-                <label class="pill"><input type="radio" name="kiefer_p" value="UK"> UK</label>
-                <label class="pill"><input type="radio" name="kiefer_p" value="OK/UK"> OK/UK</label>
-              </div>
-            </div>
-
-            <div id="card-zahn_p" class="question-card">
-              <div class="question-title">Zahn / Zähne</div>
-              <input type="text" id="zahn_p" placeholder="z.B. 14, 15-17">
-            </div>
-
-            <div id="card-labor_p" class="question-card">
-              <div class="question-title">Labor</div>
-              <input type="text" id="labor_p" placeholder="Laborname">
-            </div>
-
-            <div id="card-zf_p" class="question-card">
-              <div class="question-title">Zahnfarbe</div>
-              <input type="text" id="zf_p" placeholder="z.B. A2, A3">
-            </div>
-
-            <div id="card-leg_p" class="question-card">
-              <div class="question-title">Legierung</div>
-              <input type="text" id="leg_p" placeholder="z.B. NEM">
-            </div>
-
-            <div id="card-rep-text_p" class="question-card">
-              <div class="question-title">Welche Reparatur?</div>
-              <input type="text" id="rep_text_p" placeholder="z.B. Sprung, Zahn 12 ab">
-            </div>
-
-            <div id="card-gesichtsbogen_p" class="question-card">
-              <div class="question-title">Gesichtsbogen?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="gesichtsbogen_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="gesichtsbogen_p" value="Nein"> Nein</label>
-              </div>
-            </div>
-
-            <div id="card-saugeffekt_p" class="question-card">
-              <div class="question-title">Saugeffekt (nur OK)?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="saugeffekt_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="saugeffekt_p" value="Nein"> Nein</label>
-              </div>
-            </div>
-
-            <div id="card-suff_p" class="question-card">
-              <div class="question-title">Zahnform/Farbe suffizient?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="suff_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="suff_p" value="Nein"> Nein</label>
-              </div>
-              <div id="suffOptions_p" class="sub-options">
-                <div class="label-row"><span style="font-size:13px">Womit unzufrieden?</span></div>
-                <div class="choice-group cols-2">
-                  <label class="choice"><input type="checkbox" name="insuff_art_p" value="Zahnform"> <span>Form</span></label>
-                  <label class="choice"><input type="checkbox" name="insuff_art_p" value="Zahnfarbe"> <span>Farbe</span></label>
-                </div>
-              </div>
-            </div>
-
-            <div id="card-randschluss_p" class="question-card full-width">
-              <div class="question-title">Randschluss suffizient?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="randschluss_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="randschluss_p" value="Nein"> Nein</label>
-              </div>
-            </div>
-
-            <div id="card-aesthetik_p" class="question-card">
-              <div class="question-title">Pat. mit Ästhetik zufrieden?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="aesthetik_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="aesthetik_p" value="Nein"> Nein</label>
-              </div>
-            </div>
-
-            <div id="card-okklusion_p" class="question-card">
-              <div class="question-title">Okklusion korrigiert?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="okklusion_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="okklusion_p" value="Nein"> Nein</label>
-              </div>
-              <div id="okklusionOptions_p" class="sub-options">
-                <input type="text" id="okklusion_wo_p" placeholder="Wo? (z.B. 14, 26)">
-              </div>
-            </div>
-
-            <div id="card-checkbiss_p" class="question-card">
-              <div class="question-title">Check-Biss?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="checkbiss_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="checkbiss_p" value="Nein"> Nein</label>
-              </div>
-            </div>
-
-            <div id="card-baender_p" class="question-card">
-              <div class="question-title">Bänder/Rand ausgeschliffen?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="baender_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="baender_p" value="Nein"> Nein</label>
-              </div>
-            </div>
-
-            <div id="card-auflagen_p" class="question-card">
-              <div class="question-title">Auflagen eingeschliffen?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="auflagen_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="auflagen_p" value="Nein"> Nein</label>
-              </div>
-              <div id="auflagenOptions_p" class="sub-options">
-                <input type="text" id="auflagen_zaehne_p" placeholder="Welche Zähne?">
-              </div>
-            </div>
-
-            <div id="card-anker-sitz_p" class="question-card">
-              <div class="question-title">Ankersitz suffizient?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="anker_sitz_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="anker_sitz_p" value="Nein"> Nein</label>
-              </div>
-            </div>
-
-            <div id="card-zement_p" class="question-card full-width">
-              <div class="question-title">Welcher Zement?</div>
-              <div class="choice-group cols-3">
-                <label class="choice"><input type="radio" name="zement_p" value="Harvard"> <span>Harvard</span></label>
-                <label class="choice"><input type="radio" name="zement_p" value="GIZ"> <span>GIZ</span></label>
-                <label class="choice">
-                  <input type="radio" name="zement_p" value="Sonstiges" id="zemOtherCb_p">
-                  <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                    <input type="text" id="zement_text_p" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; border:1px solid var(--line); border-radius:8px; width:100%;">
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div id="card-zement-praep_p" class="question-card full-width">
-              <div class="question-title">Welcher Zement/Kleber?</div>
-              <div class="choice-group cols-3">
-                <label class="choice"><input type="radio" name="zement_praep_p" value="Harvard"> <span>Harvard</span></label>
-                <label class="choice"><input type="radio" name="zement_praep_p" value="Fuji"> <span>Fuji</span></label>
-                <label class="choice"><input type="radio" name="zement_praep_p" value="RelyX"> <span>RelyX</span></label>
-                <label class="choice"><input type="radio" name="zement_praep_p" value="VarioLink"> <span>VarioLink</span></label>
-                <label class="choice" style="grid-column: 1 / -1;">
-                  <input type="radio" name="zement_praep_p" value="Sonstiges" id="zemPraepOtherCb_p">
-                  <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                    <input type="text" id="zement_praep_text_p" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; border:1px solid var(--line); border-radius:8px; width:100%;">
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div id="card-ueber-jn_p" class="question-card">
-              <div class="question-title">Überabformung?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="ueber_jn_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="ueber_jn_p" value="Nein"> Nein</label>
-              </div>
-            </div>
-
-            <div id="card-ueberabformung_p" class="question-card full-width">
-              <div class="question-title">Womit Überabformung?</div>
-              <div class="choice-group cols-3">
-                <label class="choice"><input type="checkbox" name="ueber_mat_p" value="Impregum"> <span>Impregum</span></label>
-                <label class="choice"><input type="checkbox" name="ueber_mat_p" value="Alginat"> <span>Alginat</span></label>
-                <label class="choice">
-                  <input type="checkbox" name="ueber_mat_p" value="Sonstiges" id="ueberOtherCb_p">
-                  <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                    <input type="text" id="ueber_text_p" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; border:1px solid var(--line); border-radius:8px; width:100%;">
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div id="card-praep-art_p" class="question-card full-width">
-              <div class="question-title">Art der Präparation</div>
-              <div class="yn" style="margin-bottom: 12px;">
-                <label class="pill"><input type="radio" name="praep_art_p" value="Krone"> Krone</label>
-                <label class="pill"><input type="radio" name="praep_art_p" value="Teilkrone"> Teilkrone</label>
-                <label class="pill"><input type="radio" name="praep_art_p" value="Brücke"> Brücke</label>
-                <label class="pill"><input type="radio" name="praep_art_p" value="Kombiniert"> Kombiniert</label>
-              </div>
-              <div id="praep_single_wrap_p" style="display:none;">
-                <input type="text" id="praep_single_zahn_p" placeholder="Zahn / Zähne (z.B. 14, 15)">
-              </div>
-              <div id="praep_kombi_wrap_p" style="display:none; grid-template-columns: 1fr 1fr 1fr; gap:14px;">
-                <div><div class="label" style="font-size:13px; margin-bottom: 6px;">Krone</div><input type="text" id="praep_k_zahn_p" placeholder="Zähne"></div>
-                <div><div class="label" style="font-size:13px; margin-bottom: 6px;">Teilkrone</div><input type="text" id="praep_tk_zahn_p" placeholder="Zähne"></div>
-                <div><div class="label" style="font-size:13px; margin-bottom: 6px;">Brücke</div><input type="text" id="praep_b_zahn_p" placeholder="Zähne"></div>
-              </div>
-            </div>
-
-            <div id="card-anaesthesie_p" class="question-card full-width">
-              <div class="question-title">Anästhesie?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="anae_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="anae_p" value="Nein"> Nein</label>
-              </div>
-              <div id="anaeOptions_p" class="sub-options">
-                <div class="choice-group cols-3">
-                  <label class="choice"><input type="checkbox" name="anae_art_p" value="Leitungsanästhesie"> <span>Leitung</span></label>
-                  <label class="choice"><input type="checkbox" name="anae_art_p" value="Infiltration"> <span>Infiltration</span></label>
-                  <label class="choice"><input type="checkbox" name="anae_art_p" value="Intraligamentär"> <span>Intralig.</span></label>
-                </div>
-              </div>
-            </div>
-
-            <div id="card-ekr_p" class="question-card">
-              <div class="question-title">EKR (Krone entfernt)?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="ekr_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="ekr_p" value="Nein"> Nein</label>
-              </div>
-              <div id="ekrOptions_p" class="sub-options">
-                <input type="text" id="ekr_zaehne_p" placeholder="An welchen Zähnen?">
-              </div>
-            </div>
-
-            <div id="card-stift_p" class="question-card full-width">
-              <div class="question-title">Wurzelstift gesetzt?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="stift_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="stift_p" value="Nein"> Nein</label>
-              </div>
-              <div id="stiftOptions_p" class="sub-options">
-                <div style="margin-top:10px;">
-                  <input type="text" id="stiftZahn_p" placeholder="An welchem/welchen Zahn/Zähnen? (z.B. 14)">
-                </div>
-
-                <div class="question-title" style="margin-top:16px; font-size:14px;">Stift-Art</div>
-                <div class="choice-group" style="grid-template-columns: 1fr 1fr;">
-                  <label class="choice"><input type="radio" name="stiftArt_p" value="Titan"> <span>Titan</span></label>
-                  <label class="choice"><input type="radio" name="stiftArt_p" value="Glasfaser"> <span>Glasfaser</span></label>
-                  <label class="choice full-width">
-                    <input type="radio" name="stiftArt_p" value="Sonstiges" id="radioStiftArtOther_p">
-                    <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                      <input type="text" id="stiftArtOtherText_p" placeholder="Sonstiges (Material)" disabled style="padding:8px; font-size:14px; width: 100%; border: 1px solid var(--line); border-radius: 8px;">
-                    </div>
-                  </label>
-                </div>
-
-                <div class="question-title" style="margin-top:16px; font-size:14px;">Wurzelstift – Maße / Kanal</div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                  <input type="text" id="stiftIso_p" placeholder="ISO-Größe">
-                  <input type="text" id="stiftLaenge_p" placeholder="Länge (in mm)">
-                </div>
-                <div style="margin-top:10px;">
-                  <input type="text" id="stiftKanal_p" placeholder="In welchen Kanal wurde gebohrt? (z.B. palatinal) – falls mehrwurzelig">
-                </div>
-
-                <div class="question-title" style="margin-top:16px; font-size:14px;">Zement/Kleber</div>
-                <div class="choice-group" style="grid-template-columns: 1fr 1fr;">
-                  <label class="choice"><input type="radio" name="stiftZement_p" value="RelyX"> <span>RelyX</span></label>
-                  <label class="choice"><input type="radio" name="stiftZement_p" value="Fuji"> <span>Fuji</span></label>
-                  <label class="choice full-width">
-                    <input type="radio" name="stiftZement_p" value="Sonstiges" id="radioStiftZementOther_p">
-                    <div style="flex:1; display:flex; gap:10px; align-items:center;">
-                      <input type="text" id="stiftZementOtherText_p" placeholder="Sonstiges" disabled style="padding:8px; font-size:14px; width: 100%; border: 1px solid var(--line); border-radius: 8px;">
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-
-
-            <div id="card-retraktion_p" class="question-card">
-              <div class="question-title">Retraktion</div>
-              <div class="choice-group">
-                <label class="choice"><input type="radio" name="retraktion_p" value="Retraktionsfaden"> <span>Retraktionsfaden</span></label>
-                <label class="choice"><input type="radio" name="retraktion_p" value="Retraktionspaste"> <span>Retraktionspaste</span></label>
-                <label class="choice"><input type="radio" name="retraktion_p" value="Elektrotom"> <span>Elektrotom</span></label>
-              </div>
-              <div id="retraktionOptions_p" class="sub-options">
-                <input type="text" id="retraktion_groesse_p" placeholder="Größe (z.B. 00)">
-              </div>
-            </div>
-
-            <div id="card-loeffel_p" class="question-card">
-              <div class="question-title">Löffelart</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="loeffel_p" value="konfektionierter Löffel"> Konfektioniert</label>
-                <label class="pill"><input type="radio" name="loeffel_p" value="laborgefertigter Löffel"> Laborgefertigt</label>
-              </div>
-            </div>
-
-            <div id="card-pv_p" class="question-card full-width">
-              <div class="question-title">Prov. Versorgung (pV)?</div>
-              <div class="yn">
-                <label class="pill"><input type="radio" name="pv_p" value="Ja"> Ja</label>
-                <label class="pill"><input type="radio" name="pv_p" value="Nein"> Nein</label>
-              </div>
-              <div id="pvOptions_p" class="sub-options">
-                <div class="choice-group cols-2">
-                  <label class="choice"><input type="radio" name="pv_art_p" value="aus Protemp"> <span>Protemp</span></label>
-                  <label class="choice"><input type="radio" name="pv_art_p" value="aus alter Krone"> <span>alte Krone</span></label>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <div id="globalNextSection" class="main-box always-show">
-      <h2 class="section-title">Weiteres Vorgehen (Next)</h2>
-      <div class="section">
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <input type="text" id="global_next1" placeholder="1. (Erforderlich / Manuell)">
-          <input type="text" id="global_next2" placeholder="2. (Optional)">
-        </div>
-      </div>
-    </div>
-
-    <div id="authorSection" class="main-box always-show">
-      <h2 class="section-title">Dokumentation durch</h2>
-      <div class="section" style="border:none; padding:0; background:transparent;">
-        <div class="yn" style="justify-content: center;">
-          <label class="pill"><input type="radio" name="author_global" value="Max Mustermann"> Max Mustermann</label>
-          <label class="pill"><input type="radio" name="author_global" value="Maria Musterfrau"> Maria Musterfrau</label>
-        </div>
-        <div style="margin-top:16px; text-align:center;">
-        </div>
-      </div>
-    </div>
-
-    <div class="main-box always-show">
-      <div class="bar" style="margin-bottom: 16px;">
-        <button id="analyzeBtn" class="btn" type="button" disabled>Dokumentation generieren</button>
-        <span id="status-build" class="status">Text wurde erstellt</span>
-      </div>
-      <div class="label-row"><div class="label">Generierter Textblock</div></div>
-      <div class="bar"><button id="toggleBtn" class="toggle-btn" type="button">Textblock anzeigen</button></div>
-      <div id="docWrap" class="doc-wrap">
-        <div id="editor" class="doc-editor" contenteditable="true">Bitte füllen Sie alle aktiven Behandlungen aus.</div>
-        <div class="bar">
-          <button id="copyAllBtn" class="btn" type="button">Alles kopieren</button>
-          <span id="status-all" class="status">Kopiert!</span>
-        </div>
-      </div>
+    <p class="selection-hint" id="selectionHint" aria-live="polite">Noch nichts ausgewählt</p>
+    <p class="selection-hint">Freigeschaltet: 01/FU, Füllung, Extraktion und WKB.</p>
+
+    <!-- ACCESSIBILITY: native <button> elements with aria-pressed for toggle semantics -->
+    <div class="button-grid" role="group" aria-label="Behandlungsauswahl">
+      <button class="big-button" data-mode="01" aria-pressed="false" type="button">01 / FU</button>
+      <button class="big-button" data-mode="fuellung" aria-pressed="false" type="button">Füllung</button>
+      <button class="big-button" data-mode="ex" aria-pressed="false" type="button">Extraktion</button>
+      <button class="big-button" data-mode="wkb" aria-pressed="false" type="button">WKB</button>
+      <button class="big-button" data-mode="schiene" aria-pressed="false" type="button" disabled title="In der Demo nicht verfügbar">Schiene</button>
+      <button class="big-button" data-mode="cerec" aria-pressed="false" type="button" disabled title="In der Demo nicht verfügbar">Cerec-Krone</button>
+      <button class="big-button" data-mode="implantate" aria-pressed="false" type="button" disabled title="In der Demo nicht verfügbar">Implantate</button>
+      <button class="big-button" data-mode="prothetik" aria-pressed="false" type="button" disabled title="In der Demo nicht verfügbar">Prothetik</button>
     </div>
 
     <div class="footer-row">
-      <div style="display:flex; gap:16px; align-items:center;">
-        <div class="version-tag">Demoversion</div>
-        <a href="home.html" style="text-decoration: none;">
-          <button class="toggle-btn" type="button" style="padding: 6px 12px; font-size:12px; margin:0;">Zurück zum Menü</button>
-        </a>
-      </div>
       <div class="footer-credit">Entwickelt von Farid Akbar Tabrizi</div>
     </div>
   </div>
 
-  <script src="js/module_stubs.js"></script>
-  <script src="js/module_01.js"></script>
-  <script src="js/module_fuellung.js"></script>
-  <script src="js/module_ex.js"></script>
-  <script src="js/module_wkb.js"></script>
-  
-  
-  
-  
-  <script src="js/main.js"></script>
+  <!-- Sticky bottom bar: reset + weiter -->
+  <div class="sticky-footer">
+    <button id="resetBtn" class="reset-btn" type="button" disabled aria-label="Auswahl zurücksetzen">Zurücksetzen</button>
+    <button id="nextStep" class="next-btn" disabled type="button" aria-label="Weiter zur Dokumentation">Weiter →</button>
+  </div>
+
+  <script>
+    const VALID_MODES = ['01','fuellung','ex','wkb','schiene','cerec','implantate','prothetik'];
+
+    const buttons  = document.querySelectorAll('.big-button');
+    const nextBtn  = document.getElementById('nextStep');
+    const resetBtn = document.getElementById('resetBtn');
+    const hint     = document.getElementById('selectionHint');
+
+    function getSelectedModes() {
+      return Array.from(document.querySelectorAll('.big-button[aria-pressed="true"]'))
+        .map(b => b.getAttribute('data-mode'));
+    }
+
+    function updateUI() {
+      const selected = getSelectedModes();
+      const anySelected = selected.length > 0;
+
+      nextBtn.disabled  = !anySelected;
+      resetBtn.disabled = !anySelected;
+
+      if (!anySelected) {
+        hint.textContent = 'Noch nichts ausgewählt';
+      } else {
+        hint.textContent = selected.length === 1
+          ? '1 Behandlung ausgewählt'
+          : `${selected.length} Behandlungen ausgewählt`;
+      }
+    }
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pressed = btn.getAttribute('aria-pressed') === 'true';
+        btn.setAttribute('aria-pressed', String(!pressed));
+        updateUI();
+      });
+    });
+
+    resetBtn.addEventListener('click', () => {
+      buttons.forEach(btn => btn.setAttribute('aria-pressed', 'false'));
+      updateUI();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      const modes = getSelectedModes().filter(m => VALID_MODES.includes(m));
+      if (modes.length === 0) return;
+
+      const modeStr = modes.join(',');
+
+      // sessionStorage mit Fallback
+      try {
+        sessionStorage.setItem('kombiMode', modeStr);
+      } catch (e) {
+        // sessionStorage nicht verfügbar (z.B. privater Modus) – URL-Parameter genügt
+      }
+
+      window.location.href = `index2.html?mode=${encodeURIComponent(modeStr)}`;
+    });
+
+    // Initialzustand
+    updateUI();
+  </script>
+
 </body>
 </html>
