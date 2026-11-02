@@ -1,4 +1,6 @@
 // === GLOBALE VARIABLEN & HILFSFUNKTIONEN ===
+// Demoversion: ohne Statistik-Übertragung, nur 01/FU, Füllung, Extraktion und WKB freigeschaltet
+const APP_VERSION = 'Demoversion';
 const params = new URLSearchParams(window.location.search);
 function getTreatmentModes() {
   const urlMode = params.get('mode');
@@ -25,6 +27,54 @@ const editor = document.getElementById('editor');
 const toggleBtn = document.getElementById('toggleBtn');
 const copyAllBtn = document.getElementById('copyAllBtn');
 
+// === BEHANDLER (zentral pflegen) ===
+// name: Anzeige · kuerzel: steht am Ende des Textes · bild: optionale Bilddatei (in der Demo keine)
+const BEHANDLER = [
+  { name: 'Max Mustermann',   kuerzel: 'MM', bild: '' },
+  { name: 'Maria Musterfrau', kuerzel: 'MF', bild: '' }
+];
+
+// Baut die Auswahl "Dokumentation durch" samt Bildern aus der Liste oben auf
+function renderBehandler() {
+  const section = document.getElementById('authorSection');
+  if (!section) return;
+  const yn = section.querySelector('.yn');
+  if (yn) {
+    yn.innerHTML = '';
+    BEHANDLER.forEach(b => {
+      const label = document.createElement('label');
+      label.className = 'pill';
+      const inp = document.createElement('input');
+      inp.type = 'radio'; inp.name = 'author_global'; inp.value = b.name;
+      label.append(inp, ' ' + b.name);
+      yn.appendChild(label);
+    });
+  }
+  const oldImg = section.querySelector('img');
+  const imgWrap = oldImg ? oldImg.parentElement : null;
+  if (imgWrap) {
+    imgWrap.innerHTML = '';
+    BEHANDLER.forEach((b, i) => {
+      if (!b.bild) return;
+      const img = document.createElement('img');
+      img.id = `img_behandler_${i}`;
+      img.alt = b.name;
+      img.style.cssText = 'display:none; max-height:150px; border-radius:12px;';
+      img.onerror = () => { img.dataset.broken = '1'; img.style.display = 'none'; };
+      img.src = b.bild;
+      imgWrap.appendChild(img);
+    });
+  }
+}
+function showBehandlerBild(name) {
+  BEHANDLER.forEach((b, i) => {
+    const img = document.getElementById(`img_behandler_${i}`);
+    if (img) img.style.display = (b.name === name && !img.dataset.broken) ? 'inline-block' : 'none';
+  });
+}
+function getBehandlerKuerzel(name) { return (BEHANDLER.find(b => b.name === name) || {}).kuerzel || ''; }
+renderBehandler();
+
 function applyModeUI() {
   if (active01) document.getElementById('box_01').style.display = 'block';
   if (activeFuellung) document.getElementById('box_fuellung').style.display = 'block';
@@ -49,6 +99,8 @@ function applyModeUI() {
   document.title = titles.length === 1 ? titles[0] : 'Kombi-Dokumentation';
   document.getElementById('pageTitle').textContent = titles.length === 1 ? `${titles[0]}-Dokumentation` : 'Kombi-Dokumentation';
   document.getElementById('pageSubtitle').textContent = titles.length === 1 ? 'Einzelbehandlung' : titles.join(' + ');
+  const versionTag = document.querySelector('.version-tag');
+  if (versionTag) versionTag.textContent = APP_VERSION;
 }
 
 function getVal(name) { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; }
@@ -94,7 +146,59 @@ function applyDefaultSelections() {
   }
 }
 function isMultiRooted(t) { t=parseInt(t,10); if(!t)return false; let q=Math.floor(t/10), d=t%10; return (d>=6&&d<=8) || ((q===1||q===2)&&d===4); }
-function parseTeeth(str) { return str.split(',').map(s=>s.trim()).filter(Boolean); }
+// Trennt Zahnangaben an Komma, Semikolon oder Leerzeichen ("14, 15", "14 15", "14;15").
+// Brücken-Spannen bleiben zusammen ("14-16" und "14 - 16" -> "14-16"), doppelte Angaben werden entfernt.
+// Füllwörter ohne Ziffern (z. B. "und") werden ignoriert.
+function parseTeeth(str) {
+  const list = String(str || '').replace(/\s*[-–]\s*/g, '-').split(/[\s,;]+/).map(s => s.trim()).filter(s => /\d/.test(s));
+  return [...new Set(list)];
+}
+
+// FDI-Prüfung: bleibende Zähne 11–48, Milchzähne 51–85
+function isValidFdi(t) {
+  if (!/^\d{2}$/.test(t)) return false;
+  const q = Number(t[0]), d = Number(t[1]);
+  if (q >= 1 && q <= 4) return d >= 1 && d <= 8;
+  if (q >= 5 && q <= 8) return d >= 1 && d <= 5;
+  return false;
+}
+function getInvalidTeeth(str) {
+  return [...new Set(parseTeeth(str).flatMap(x => x.split('-')).filter(Boolean).filter(t => !isValidFdi(t)))];
+}
+
+// Eingabefelder mit Zahnnummern; ungültige Angaben werden direkt unter dem Feld angezeigt
+const TOOTH_INPUT_IDS = ['toothNumber_f', 'toothNumber_wkb', 'toothNumber_ex', 'toothNumber_ex_ext', 'toothNumber_ex_ost',
+  'toothNumber_c', 'toothNumber_c_krone', 'toothNumber_c_teilkrone', 'toothNumber_c_bruecke',
+  'toothInput_impl', 'impl_k_zahn', 'impl_b_zahn',
+  'zahn_p', 'praep_single_zahn_p', 'praep_k_zahn_p', 'praep_tk_zahn_p', 'praep_b_zahn_p', 'stiftZahn_p', 'ekr_zaehne_p'];
+
+// Liefert die Zahnfelder mit ungültigen Nummern (leer = alles in Ordnung)
+function validateToothInputs() {
+  const badFields = [];
+  TOOTH_INPUT_IDS.forEach(id => {
+    const inp = document.getElementById(id);
+    if (!inp) return;
+    let hint = document.getElementById(`${id}_hint`);
+    const visible = inp.offsetParent !== null;
+    const bad = visible ? getInvalidTeeth(inp.value) : [];
+    if (bad.length > 0) {
+      badFields.push({ label: `Ungültige Zahnnummer ${bad.join(', ')}`, el: inp });
+      if (!hint) {
+        hint = document.createElement('div');
+        hint.id = `${id}_hint`;
+        hint.style.cssText = 'color:#b91c1c; font-size:13px; margin-top:6px;';
+        // Bei Feldern in einer Zeile mit Button den Hinweis unter die ganze Zeile setzen
+        const anchor = inp.parentElement && inp.parentElement.id === 'impl_regio_single' ? inp.parentElement : inp;
+        anchor.insertAdjacentElement('afterend', hint);
+      }
+      hint.textContent = `Ungültige Zahnnummer: ${bad.join(', ')}`;
+      hint.style.display = 'block';
+    } else if (hint) {
+      hint.style.display = 'none';
+    }
+  });
+  return badFields;
+}
 function hasUpperPosterior(t) { const num = parseInt(t, 10);
   return ((num >= 14 && num <= 18) || (num >= 24 && num <= 28));
 }
@@ -153,35 +257,35 @@ function syncToothBlocks(containerId, sourceTooth, targetTeeth) {
 function updateBlocks(containerId, templateId, teethArray) {
     const container = document.getElementById(containerId);
     const template = document.getElementById(templateId);
-    
+
     Array.from(container.children).forEach(block => {
         if (block.classList.contains('global-sync-btn')) return;
         const t = block.dataset.tooth; const type = block.dataset.extype;
         if (!teethArray.some(x => typeof x === 'string' ? x === t : (x.t === t && x.type === type))) block.remove();
     });
-    
+
     const existingTeethCombo = Array.from(container.children).filter(c => c.dataset.tooth).map(c => c.dataset.extype ? `${c.dataset.tooth}-${c.dataset.extype}` : c.dataset.tooth);
 
     teethArray.forEach(item => {
         const t = typeof item === 'string' ? item : item.t;
         const type = typeof item === 'string' ? '' : item.type;
         const comboId = type ? `${t}-${type}` : t;
-        
+
         if (!existingTeethCombo.includes(comboId)) {
             const block = document.createElement('div');
             block.className = 'tooth-block section full';
             block.dataset.tooth = t;
             if (type) block.dataset.extype = type;
-            
+
             const title = document.createElement('div');
             title.className = 'question-title';
             title.style.fontSize = '18px'; title.style.color = 'var(--accent)'; title.style.marginBottom = '12px';
             title.innerText = type === 'Brücke' ? `Therapie Brücke Regio ${t}` : (type ? `Therapie Zahn ${t} (${type})` : `Therapie Zahn ${t}`);
             block.appendChild(title);
-            
+
             const clone = template.content.cloneNode(true);
             const tSafe = type ? `${t.replace(/\W/g, '')}_${type.substring(0,3)}` : t.replace(/\W/g, '');
-            
+
             clone.querySelectorAll('[id]').forEach(el => el.id = el.id + '_' + tSafe);
             clone.querySelectorAll('[name]').forEach(el => el.name = el.name + '_' + tSafe);
             clone.querySelectorAll('[for]').forEach(el => el.htmlFor = el.htmlFor + '_' + tSafe);
@@ -189,7 +293,7 @@ function updateBlocks(containerId, templateId, teethArray) {
                 inp.addEventListener('input', updateAllUI); inp.addEventListener('change', updateAllUI);
                 if(inp.id.startsWith('mkvPrice')) inp.addEventListener('blur', () => formatCurrency(inp));
             });
-            
+
             if (templateId === 'tpl_fuellung') {
                 clone.querySelectorAll(`input[name="mkv_f_${tSafe}"]`).forEach(r => r.addEventListener('change', (e) => {
                     if (e.target.value === 'Ja') { const maj = document.querySelector(`input[name="material_f_${tSafe}"][value="Majesty Clearfill"]`); if (maj && !maj.checked) maj.checked = true; }
@@ -245,7 +349,7 @@ function updateBlocks(containerId, templateId, teethArray) {
             container.appendChild(block);
         }
     });
-    
+
     let syncBtn = container.querySelector('.global-sync-btn');
     if (teethArray.length > 1 && !teethArray.some(x => x.type === 'Brücke')) {
         if (!syncBtn) {
@@ -263,32 +367,236 @@ function updateBlocks(containerId, templateId, teethArray) {
     } else if (syncBtn) { syncBtn.remove(); }
 }
 
-function checkGlobalReady() {
+// Module, die selbst einen Vorschlag für "Therapie/Next" liefern. Sind nur andere Module aktiv,
+// muss "Weiteres Vorgehen 1" ausgefüllt werden, sonst bliebe der Abschnitt leer.
+const providesAutoNext = activeEx || activeWkb || activeSchiene || activeImplantate;
+
+// Liefert die Liste der noch offenen allgemeinen Angaben (leer = alles ausgefüllt)
+function getGlobalMissing() {
   document.getElementById('global_childOptions').classList.toggle('show', getVal('isChild_global') === 'Ja');
   document.getElementById('global_beschwerdenOptions').classList.toggle('show', getVal('beschwerden_global') === 'Ja');
-  if (!forceAdult && getVal('isChild_global') === 'Ja' && !document.getElementById('erziehungsberechtigter_global').value.trim()) return false;
-  if (getVal('beschwerden_global') === 'Ja' && !document.getElementById('beschwerdenText_global').value.trim()) return false;
-  if (!getVal('author_global') || !getVal('beschwerden_global')) return false;
-  return true;
+  const missing = [];
+  const add = (label, el) => missing.push({ label, el });
+  if (!forceAdult && getVal('isChild_global') === 'Ja' && !document.getElementById('erziehungsberechtigter_global').value.trim()) add('Begleitperson', document.getElementById('erziehungsberechtigter_global'));
+  if (!getVal('beschwerden_global')) add('Beschwerden', document.querySelector('input[name="beschwerden_global"]'));
+  else if (getVal('beschwerden_global') === 'Ja' && !document.getElementById('beschwerdenText_global').value.trim()) add('Details zu den Beschwerden', document.getElementById('beschwerdenText_global'));
+  if (!providesAutoNext && !document.getElementById('global_next1').value.trim()) add('Weiteres Vorgehen (Next 1)', document.getElementById('global_next1'));
+  if (!getVal('author_global')) add('Dokumentation durch', document.getElementById('authorSection'));
+  return missing;
+}
+function checkGlobalReady() { return getGlobalMissing().length === 0; }
+
+// === OFFENE FRAGEN ERMITTELN ===
+// Felder, die sichtbar sein dürfen, ohne beantwortet zu sein (Name bzw. ID ohne Zahn-Endung)
+const OPTIONAL_FIELDS = ['therapieSonstiges_01', 'global_next2',
+  'mkv_f', 'vipr_f', 'anaesthesie_f', 'bmf_f', 'aufbau_f', 'cpp_f',
+  'vipr_wkb', 'wfMitgemacht_wkb', 'mkvPrice_wkb',
+  'anaesthesie_c', 'retraktion_c',
+  'ubi100', 'ubi200',
+  'auflagen_p', 'stiftKanal_p'];
+
+// Zahnfelder, bei denen nur mindestens eines ausgefüllt sein muss
+const TEXT_GROUPS = {
+  praep_kombi_wrap_p: 'Art der Präparation – Zähne (Krone / Teilkrone / Brücke)',
+  teethKombi_c: 'Zähne (Krone / Teilkrone / Brücke)',
+  teethKombi_ex: 'Zähne (Extraktion / Osteotomie)',
+  impl_regio_kombi: 'Regio (Krone / Brücke)'
+};
+
+function isFieldShown(el) { return el.offsetParent !== null; }
+
+function isOptionalField(el, key) {
+  if (el.classList.contains('mini-input')) return true;
+  if (OPTIONAL_FIELDS.some(b => key === b || key.startsWith(b + '_'))) return true;
+  // WKB: Anästhesie ist nur bei Med und WF Pflicht
+  if (key.startsWith('anaesthesie_wkb_')) {
+    const step = el.closest('.tooth-block')?.querySelector('input[name^="therapieschritt_wkb_"]:checked')?.value;
+    return step === 'WKB';
+  }
+  return false;
+}
+
+function cleanLabelText(s) { return String(s || '').replace(/\s*\([^)]*\)/g, '').replace(/\s*[–-]\s*falls.*$/i, '').replace(/[:\s]+$/, '').replace(/\s+/g, ' ').trim(); }
+
+// Liefert den lesbaren Namen der Frage, zu der ein Eingabefeld gehört
+function getFieldLabel(el) {
+  const card = el.closest('.question-card') || el.closest('.section');
+  const titleEl = card ? card.querySelector('.question-title, .label') : null;
+  const title = titleEl ? cleanLabelText(titleEl.textContent) : '';
+  const isChoice = el.type === 'radio' || el.type === 'checkbox';
+  let detail = '';
+
+  // Unterfrage innerhalb aufklappbarer Optionen (z. B. "Stift-Art", "Rö-Messaufnahme");
+  // Textfelder dort werden über ihren Platzhalter benannt (z. B. "ISO-Größe", "Preis")
+  const sub = el.closest('.sub-options');
+  if (sub && card && card.contains(sub)) {
+    if (!isChoice && el.placeholder) detail = cleanLabelText(el.placeholder);
+    if (!detail) {
+      const inner = Array.from(sub.querySelectorAll('.question-title, .label-row span'))
+        .filter(t => t.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING).pop();
+      detail = inner ? cleanLabelText(inner.textContent) : (isChoice ? 'Auswahl' : '');
+    }
+  }
+  // Zwischenüberschrift direkt an der Auswahl (z. B. "Gewinde geschnitten?", "Periostschlitzung?")
+  if (!detail && isChoice) {
+    const grp = el.closest('.yn, .choice-group');
+    const own = grp ? Array.from(grp.children).find(c => c.tagName === 'LABEL' && !c.classList.contains('pill') && !c.classList.contains('choice')) : null;
+    const prev = grp ? grp.previousElementSibling : null;
+    const prevOk = prev && prev !== titleEl && !prev.querySelector('input') && prev.textContent.trim();
+    if (own) detail = cleanLabelText(own.textContent);
+    else if (prevOk) detail = cleanLabelText(prev.textContent);
+  }
+  // Textfeld in einer Karte mit mehreren Eingaben: Platzhalter als Zusatz
+  if (!detail && !isChoice && card && card.querySelectorAll('input:not(.mini-input)').length > 1) detail = cleanLabelText(el.placeholder);
+  if (!title && !detail && !isChoice) detail = cleanLabelText(el.placeholder);
+
+  let label = title && detail && detail !== title ? `${title} – ${detail}` : (title || detail || 'Angabe');
+  const block = el.closest('.tooth-block, .tooth-card');
+  if (block && block.dataset.tooth) {
+    const prefix = block.classList.contains('tooth-card') ? 'Regio' : (block.dataset.extype === 'Brücke' ? 'Brücke' : 'Zahn');
+    label = `${prefix} ${block.dataset.tooth}: ${label}`;
+  }
+  return label;
+}
+
+// Sucht in einem Modul alle sichtbaren, noch nicht beantworteten Pflichtfragen
+function findMissingFields(box) {
+  const out = [];
+  const seen = new Set();
+  const groupIds = Object.keys(TEXT_GROUPS);
+  // Reihenfolge wie auf dem Bildschirm (Prothetik ordnet manche Karten per CSS "order" um)
+  const add = (label, el) => out.push({ label, el, ord: Number(el.closest('.question-card')?.style.order) || 0, idx: out.length });
+  box.querySelectorAll('input').forEach(el => {
+    if (el.disabled || !isFieldShown(el)) return;
+    const key = el.name || el.id;
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    if (isOptionalField(el, key)) return;
+    if (groupIds.some(g => el.closest('#' + g))) return;
+    if (el.type === 'radio' || el.type === 'checkbox') {
+      const anyChecked = Array.from(box.querySelectorAll('input')).some(i => i.name === key && i.checked);
+      if (!anyChecked) add(getFieldLabel(el), el);
+    } else if (el.type === 'text' || el.type === 'number') {
+      if (!el.value.trim()) add(getFieldLabel(el), el);
+    }
+  });
+  groupIds.forEach(g => {
+    const wrap = box.querySelector('#' + g);
+    if (!wrap || !isFieldShown(wrap)) return;
+    if (Array.from(wrap.querySelectorAll('input')).every(i => !i.value.trim())) add(TEXT_GROUPS[g], wrap);
+  });
+  out.sort((a, b) => (a.ord - b.ord) || (a.idx - b.idx));
+  const seenLabels = new Set();
+  return out.filter(o => !seenLabels.has(o.label) && seenLabels.add(o.label)).map(o => ({ label: o.label, el: o.el }));
+}
+
+// Eine Gruppe pro Modul, z. B. "Prothetik: Approximalkontakt?, Randschluss suffizient?"
+function describeModuleMissing(name, boxId) {
+  const box = document.getElementById(boxId);
+  const items = box ? findMissingFields(box) : [];
+  const implHint = boxId === 'box_implantate' ? document.getElementById('implFormsHint') : null;
+  if (implHint && implHint.style.display !== 'none' && implHint.textContent) {
+    const btn = document.getElementById('impl_regio_kombi')?.offsetParent ? document.getElementById('generateFormsBtn_impl_kombi') : document.getElementById('generateFormsBtn_impl');
+    items.push({ label: implHint.textContent, el: btn || implHint });
+  }
+  return { name, items, el: box };
+}
+
+// Hinweis unter dem Button "Dokumentation generieren", was noch fehlt.
+// Jeder Eintrag ist anklickbar: springt zur Frage und hebt sie kurz farbig hervor.
+function ensureMissingStyles() {
+  if (document.getElementById('missingHintStyles')) return;
+  const st = document.createElement('style');
+  st.id = 'missingHintStyles';
+  st.textContent = '.missing-link{color:var(--accent,#2563eb);text-decoration:underline;cursor:pointer;}'
+    + '.missing-link:hover{text-decoration:none;}'
+    + '.missing-highlight{outline:3px solid #f59e0b !important;outline-offset:4px;border-radius:14px;transition:outline-color .4s ease;}';
+  document.head.appendChild(st);
+}
+
+function jumpToField(el) {
+  if (!el) return;
+  const target = el.closest('.question-card') || el.closest('.section') || el;
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  target.classList.add('missing-highlight');
+  setTimeout(() => target.classList.remove('missing-highlight'), 2200);
+  if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) setTimeout(() => el.focus({ preventScroll: true }), 400);
+}
+
+function makeMissingLink(text, el) {
+  const a = document.createElement('a');
+  a.href = '#';
+  a.className = 'missing-link';
+  a.textContent = text;
+  a.addEventListener('click', (e) => { e.preventDefault(); jumpToField(el); });
+  return a;
+}
+
+function showMissingHint(groups) {
+  ensureMissingStyles();
+  let hint = document.getElementById('missingHint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'missingHint';
+    hint.style.cssText = 'color:var(--muted, #64748b); font-size:13px; line-height:1.6; margin:-6px 0 14px;';
+    const bar = analyzeBtn.closest('.bar') || analyzeBtn;
+    bar.insertAdjacentElement('afterend', hint);
+  }
+  hint.textContent = '';
+  hint.style.display = groups.length > 0 ? 'block' : 'none';
+  if (groups.length === 0) return;
+  const head = document.createElement('div');
+  head.textContent = 'Noch offen (anklicken springt zur Frage):';
+  hint.appendChild(head);
+  groups.forEach(g => {
+    const line = document.createElement('div');
+    line.append('• ');
+    if (g.items.length === 0) {
+      line.appendChild(makeMissingLink(g.name, g.el));
+    } else {
+      line.append(`${g.name}: `);
+      g.items.forEach((it, i) => { if (i > 0) line.append(', '); line.appendChild(makeMissingLink(it.label, it.el)); });
+    }
+    hint.appendChild(line);
+  });
 }
 
 // === ZUSAMMENFUEHRUNG & BUILD ===
 function updateAllUI() {
-  const rGlobal = checkGlobalReady();
-  const r01 = active01 ? check01Ready() : true;
-  const rF = activeFuellung ? checkFuellungReady() : true;
-  const rEx = activeEx ? checkExReady() : true;
-  const rWkb = activeWkb ? checkWkbReady() : true;
-  const rSchiene = activeSchiene ? checkSchieneReady() : true;
-  const rCerec = activeCerec ? checkCerecReady() : true;
-  const rImpl = activeImplantate ? checkImplantateReady() : true;
-  
+  const missing = [];
+  const globalMissing = getGlobalMissing();
+  if (globalMissing.length > 0) missing.push({ name: 'Allgemein', items: globalMissing, el: document.getElementById('box_global') });
+  if (active01 && !check01Ready()) missing.push(describeModuleMissing('01/FU', 'box_01'));
+  if (activeFuellung && !checkFuellungReady()) missing.push(describeModuleMissing('Füllung', 'box_fuellung'));
+  if (activeEx && !checkExReady()) missing.push(describeModuleMissing('Extraktion', 'box_ex'));
+  if (activeWkb && !checkWkbReady()) missing.push(describeModuleMissing('WKB', 'box_wkb'));
+  if (activeSchiene && !checkSchieneReady()) missing.push(describeModuleMissing('Schiene', 'box_schiene'));
+  if (activeCerec && !checkCerecReady()) missing.push(describeModuleMissing('Cerec', 'box_cerec'));
+  if (activeImplantate && !checkImplantateReady()) missing.push(describeModuleMissing('Implantate', 'box_implantate'));
+
   updateProthetikUI();
   toggleZeBrueckeScanUI();
-  const rProthetik = activeProthetik ? checkProthetikReady() : true;
-  
-  analyzeBtn.disabled = !(rGlobal && r01 && rF && rEx && rWkb && rSchiene && rCerec && rImpl && rProthetik);
+  if (activeProthetik && !checkProthetikReady()) missing.push(describeModuleMissing('Prothetik', 'box_prothetik'));
+
+  // Erst nach den Modulen prüfen, weil diese die Sichtbarkeit der Zahnfelder setzen
+  const badTeeth = validateToothInputs();
+  if (badTeeth.length > 0) missing.push({ name: 'Zahnnummern', items: badTeeth, el: badTeeth[0].el });
+
+  analyzeBtn.disabled = missing.length > 0;
+  showMissingHint(missing);
 }
+
+// Nutzereingaben im Textblock unschädlich machen; nur die vom Programm selbst
+// verwendeten Formatierungen (<br>, <strong>, &rarr;) bleiben erhalten.
+function sanitizeDocHtml(html) {
+  return String(html)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/&lt;(\/?)(br|strong)&gt;/g, '<$1$2>')
+    .replace(/&amp;rarr;/g, '&rarr;');
+}
+
+// Erkennt, ob ein Modul den Aufklärungs-/Einverständnis-Satz schon enthält
+const CONSENT_SENTENCE_RE = /ausführlich (aufgeklärt|erläutert) (\+|und) einverst/i;
 
 function buildCombinedText() {
   try {
@@ -313,11 +621,11 @@ function buildCombinedText() {
       if (allReasons.length === 1) reasonSentence = `Pat. kommt ${allReasons[0]}`;
       else if (allReasons.length > 1) { const last = allReasons.pop(); reasonSentence = `Pat. kommt ${allReasons.join(', ')} und ${last}`; }
 
-      if (activeBlocks.some(b => b.isNeupatient === true)) reasonSentence = `Pat kommt zum 1. Mal in die Praxis<br>${reasonSentence}`;
+      if (activeBlocks.some(b => b.isNeupatient === true)) reasonSentence = `Pat. kommt zum 1. Mal in die Praxis<br>${reasonSentence}`;
 
       let complaintSentence = hasBeschwerden === 'Ja' ? `Pat. hat Beschwerden (${beschwerdenText})` : `Pat. hat keine Beschwerden`;
       let befundHtml = `${reasonSentence}<br>${complaintSentence}`;
-      
+
       if (isChild === 'Ja' && erziehungsberechtigter) befundHtml += `<br>Pat. erscheint in Begleitung (${erziehungsberechtigter})`;
 
       const allBefundDetails = activeBlocks.flatMap(b => b.otherBefund).filter(Boolean);
@@ -331,7 +639,7 @@ function buildCombinedText() {
       const manualNext1 = document.getElementById('global_next1').value.trim();
       const manualNext2 = document.getElementById('global_next2').value.trim();
       const autoNextList = activeBlocks.flatMap(b => b.autoNext).filter(Boolean);
-      
+
       const finalNext = [];
       if (manualNext1 || manualNext2) {
         if (manualNext1) finalNext.push(manualNext1);
@@ -342,17 +650,20 @@ function buildCombinedText() {
 
       const nextHtml = finalNext.map((n, i) => `${i + 1}. ${n}`).join('<br>');
       const author = getVal('author_global');
-      let initialen = author === 'Max Mustermann' ? 'MM' : (author === 'Maria Musterfrau' ? 'MF' : '');
+      let initialen = getBehandlerKuerzel(author);
 
-      editor.innerHTML = 
+      // Schlusssatz nur ergänzen, wenn kein Modul ihn schon in "Heute durchgeführt" geschrieben hat
+      const closingLine = CONSENT_SENTENCE_RE.test(todayHtml) ? '' : "Pat. ausführlich erläutert + einverst.<br><br>";
+
+      editor.innerHTML = sanitizeDocHtml(
 "<strong>Befund:</strong><br>" +
 befundHtml + "<br><br>" +
 "<strong>Heute durchgeführt:</strong><br>" +
 todayHtml + "<br><br>" +
 "<strong>Therapie/Next:</strong><br>" +
 nextHtml + "<br><br>" +
-"Pat. ausführlich erläutert + einverst.<br><br>" +
-initialen;
+closingLine +
+initialen);
 
       docWrap.classList.add('show');
       toggleBtn.textContent = 'Textblock ausblenden';
@@ -363,35 +674,13 @@ initialen;
   } catch(err) { alert("Fehler bei der Texterstellung: " + err.message); console.error(err); }
 }
 
-
 // === EVENT LISTENER BINDINGS ===
 document.querySelectorAll('input[name="author_global"]').forEach(r => {
-  r.addEventListener('change', (e) => {
-     const imgMax = document.getElementById('img_max');
-     const imgMaria = document.getElementById('img_maria');
-     if (imgMax) imgMax.style.display = e.target.value === 'Max Mustermann' ? 'inline-block' : 'none';
-     if (imgMaria) imgMaria.style.display = e.target.value === 'Maria Musterfrau' ? 'inline-block' : 'none';
-  });
+  r.addEventListener('change', (e) => showBehandlerBild(e.target.value));
 });
 
-document.querySelectorAll('input[name="mainType_impl"]').forEach(r => {
-  r.addEventListener('change', () => {
-    document.getElementById('teethContainer_impl').innerHTML = '';
-    document.getElementById('generateFormsBtn_impl').style.display = 'block';
-    if(r.value === 'ze') {
-      document.getElementById('zeLaborSection_impl').style.display = 'block';
-      document.getElementById('regioSection_impl').style.display = 'none';
-      document.querySelectorAll('input[name="labor_impl"]').forEach(lr => lr.checked = false);
-      document.getElementById('zeOptionsContainer_impl').classList.remove('show');
-      document.getElementById('zeFremdlaborOptions_impl').style.display = 'none';
-    } else {
-      document.getElementById('zeLaborSection_impl').style.display = 'none';
-      document.getElementById('regioSection_impl').style.display = 'block';
-    }
-    updateAllUI();
-  });
-});
-
+// Behandlungsart Implantate: alles in einem gemeinsamen Listener (Regio-Bereich und
+// "Formulare erzeugen"-Button werden unten über toggleImplRegioUI gesetzt)
 document.addEventListener('change', (e) => {
   if (e.target.name === 'mainType_impl') {
     document.getElementById('teethContainer_impl').innerHTML = '';
@@ -404,12 +693,12 @@ document.addEventListener('change', (e) => {
       document.getElementById('zeLaborSection_impl').style.display = 'none';
     }
   }
-  
+
   if (e.target.name === 'ze_methode_impl') {
     document.getElementById('impl_abformung_wrapper').style.display = e.target.value === 'Scan' ? 'none' : 'grid';
     updateAllUI();
   }
-  
+
   if (e.target.name === 'labor_impl') {
     document.getElementById('teethContainer_impl').innerHTML = '';
     if(e.target.value === 'Fremdlabor') {
@@ -444,19 +733,57 @@ toggleBtn.addEventListener('click', () => {
   toggleBtn.textContent = isShown ? 'Textblock anzeigen' : 'Textblock ausblenden';
 });
 
-copyAllBtn.addEventListener('click', () => {
+copyAllBtn.addEventListener('click', async () => {
   if (editor.innerText.includes('Bitte füllen Sie')) return alert('Bitte zuerst auf „Dokumentation generieren“ klicken.');
-  const textarea = document.createElement('textarea');
-  textarea.value = editor.innerText;
-  document.body.appendChild(textarea);
-  textarea.select(); document.execCommand('copy'); document.body.removeChild(textarea);
+  const text = editor.innerText;
+  let copied = false;
+  // Moderne Zwischenablage (nur über https/localhost verfügbar), sonst bisheriger Weg als Ersatz
+  try {
+    if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); copied = true; }
+  } catch (e) { copied = false; }
+  if (!copied) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select(); document.execCommand('copy'); document.body.removeChild(textarea);
+  }
   const status = document.getElementById('status-all');
   status.classList.add('show');
   setTimeout(() => status.classList.remove('show'), 1600);
 });
 
+// === NEUER PATIENT ===
+// Lädt die Seite mit denselben Behandlungen leer neu. Der gewählte Behandler bleibt erhalten.
+function addNewPatientButton() {
+  const bar = analyzeBtn.closest('.bar');
+  if (!bar || document.getElementById('newPatientBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'newPatientBtn';
+  btn.type = 'button';
+  btn.className = 'toggle-btn';
+  btn.textContent = 'Neuer Patient';
+  btn.style.marginTop = '0';
+  btn.addEventListener('click', () => {
+    if (!confirm('Alle Eingaben verwerfen und mit einem neuen Patienten beginnen?')) return;
+    try { sessionStorage.setItem('kombiAuthor', getVal('author_global')); } catch (e) {}
+    const m = getTreatmentModes().join(',');
+    window.location.href = window.location.pathname + (m ? `?mode=${encodeURIComponent(m)}` : '');
+  });
+  analyzeBtn.insertAdjacentElement('afterend', btn);
+}
+
+function restoreBehandler() {
+  let saved = '';
+  try { saved = sessionStorage.getItem('kombiAuthor') || ''; } catch (e) {}
+  if (!saved) return;
+  checkRadio('author_global', saved);
+  showBehandlerBild(saved);
+}
+
 // === INITIALIZATION ===
 applyDefaultSelections();
+restoreBehandler();
+addNewPatientButton();
 applyModeUI();
 updateAllUI();
 

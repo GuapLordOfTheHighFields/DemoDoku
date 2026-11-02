@@ -1,3 +1,17 @@
+// Karte "Ultraschall verwendet?" für die Schritte Med und WF in die Zahn-Vorlage einfügen.
+// Läuft beim Laden (vor main.js); die Karte wird danach für jeden Zahn mitkopiert.
+(function addUltraschallCard_wkb() {
+  const tpl = document.getElementById('tpl_wkb');
+  if (!tpl || tpl.content.getElementById('card-ultraschall_wkb')) return;
+  const card = document.createElement('div');
+  card.id = 'card-ultraschall_wkb';
+  card.className = 'question-card wkb-card';
+  card.innerHTML = `<div class="question-title">Ultraschall verwendet?</div><div class="yn"><label class="pill"><input type="radio" name="ultraschall_wkb" value="Ja"> Ja</label><label class="pill"><input type="radio" name="ultraschall_wkb" value="Nein"> Nein</label></div>`;
+  const mkvCard = tpl.content.getElementById('card-mkv_wkb');
+  if (mkvCard) mkvCard.insertAdjacentElement('afterend', card);
+  else tpl.content.querySelector('.question-grid')?.appendChild(card);
+})();
+
 function checkWkbReady() {
   const teeth = parseTeeth(document.getElementById('toothNumber_wkb').value);
   updateBlocks('dyn_wkb', 'tpl_wkb', teeth);
@@ -9,7 +23,7 @@ function checkWkbReady() {
     const stepVal = getValT('therapieschritt_wkb', s);
     const art = getValT('wkbart_wkb', s);
     const verf = getValT('verfahren_wkb', s);
-    
+
     document.querySelectorAll(`#dyn_wkb .tooth-block[data-tooth="${t}"] .wkb-card`).forEach(c => c.style.display = 'none');
     if (stepVal === 'WKB') {
       ['card-wkbart_wkb','card-diagnose_wkb','card-mkv_wkb','card-anaesthesie_wkb','card-kofferdam_wkb','card-praeendo_wkb','card-verfahren_wkb','card-kanaele_wkb'].forEach(id => { const el=document.getElementById(`${id}_${s}`); if(el) el.style.display = 'block'; });
@@ -26,8 +40,9 @@ function checkWkbReady() {
           else { const m = document.getElementById(`card-med_wkb_${s}`); if (m) m.style.display = 'block'; }
       } else { const m = document.getElementById(`card-med_wkb_${s}`); if (m) m.style.display = 'block'; }
     }
-    else if (stepVal === 'Med') { ['card-anaesthesie_wkb','card-kofferdam_wkb','card-med_wkb'].forEach(id => { const el=document.getElementById(`${id}_${s}`); if(el) el.style.display = 'block'; }); }
-    else if (stepVal === 'WF') { ['card-anaesthesie_wkb','card-kofferdam_wkb','card-sealer_wkb','card-wf_wkb'].forEach(id => { const el=document.getElementById(`${id}_${s}`); if(el) el.style.display = 'block'; }); }
+    // Bei Med/WF nur fragen, ob Ultraschall verwendet wurde (statt Mehrkostenvereinbarung)
+    else if (stepVal === 'Med') { ['card-anaesthesie_wkb','card-kofferdam_wkb','card-ultraschall_wkb','card-med_wkb'].forEach(id => { const el=document.getElementById(`${id}_${s}`); if(el) el.style.display = 'block'; }); }
+    else if (stepVal === 'WF') { ['card-anaesthesie_wkb','card-kofferdam_wkb','card-ultraschall_wkb','card-sealer_wkb','card-wf_wkb'].forEach(id => { const el=document.getElementById(`${id}_${s}`); if(el) el.style.display = 'block'; }); }
 
     const otherText = document.getElementById(`otherText_wkb_${s}`);
     if(document.getElementById(`radioOther_wkb_${s}`)) { otherText.disabled = !document.getElementById(`radioOther_wkb_${s}`).checked; }
@@ -70,8 +85,8 @@ function checkWkbReady() {
             if(!getValT('med_wkb', s)) allValid = false;
         }
     }
-    if(stepVal === 'Med' && (!getValT('anaesthesie_wkb', s) || !getValT('kofferdam_wkb', s) || !getValT('med_wkb', s))) allValid = false;
-    if(stepVal === 'WF' && (!getValT('anaesthesie_wkb', s) || !getValT('kofferdam_wkb', s) || !getValT('wf_wkb', s) || !getValT('sealer_wkb', s))) allValid = false;
+    if(stepVal === 'Med' && (!getValT('anaesthesie_wkb', s) || !getValT('kofferdam_wkb', s) || !getValT('ultraschall_wkb', s) || !getValT('med_wkb', s))) allValid = false;
+    if(stepVal === 'WF' && (!getValT('anaesthesie_wkb', s) || !getValT('kofferdam_wkb', s) || !getValT('ultraschall_wkb', s) || !getValT('wf_wkb', s) || !getValT('sealer_wkb', s))) allValid = false;
   });
   return allValid;
 }
@@ -86,6 +101,7 @@ function getWkbData() {
           diag: getValT('diagnose_wkb', s) === 'Sonstiges' ? document.getElementById(`otherText_wkb_${s}`).value.trim() : getValT('diagnose_wkb', s),
           anae: getValT('anaesthesie_wkb', s), anaeType: Array.from(document.querySelectorAll(`input[name="anaeType_wkb_${s}"]:checked`)).map(c => c.value),
           kofferdam: getValT('kofferdam_wkb', s), mkv: getValT('mkv_wkb', s), mkvPrice: document.getElementById(`mkvPrice_wkb_${s}`)?.value.trim(),
+          ultraschall: getValT('ultraschall_wkb', s),
           prae: getValT('praeEndo_wkb', s), verf: getValT('verfahren_wkb', s), wfMitgemacht: getValT('wfMitgemacht_wkb', s),
           med: getValT('med_wkb', s) === 'Sonstiges' ? document.getElementById(`medOtherText_wkb_${s}`).value.trim() : getValT('med_wkb', s),
           sealer: getValT('sealer_wkb', s) === 'Sonstiges' ? document.getElementById(`sealerOtherText_wkb_${s}`).value.trim() : getValT('sealer_wkb', s),
@@ -106,7 +122,7 @@ function getWkbData() {
      }
      return `${step === 'Med' ? 'zum Medikamentenwechsel' : 'zur Wurzelfüllung'} an ${stepTeeth.length > 1 ? 'den Zähnen' : 'Zahn'} ${stepTeeth.map(d=>d.t).join(', ')}`;
   }).filter(Boolean).join(' und ');
-  
+
   const otherBefund = []; const todayLines = []; const autoNext = [];
 
   ['WKB', 'Med', 'WF'].forEach(currentStep => {
@@ -132,7 +148,7 @@ function getWkbData() {
               if (d.kanaele) todayLines.push(`${d.t}: ${d.kanaele} ${Number(d.kanaele) === 1 ? 'Wurzelkanal' : 'Wurzelkanäle'} aufbereitet`);
               todayLines.push(`Spülung d. Kanäle (${d.t}) mit NaOCL${d.mkv === 'Ja' ? ' + Ultraschall' : ''}`);
               if (d.roe === 'Ja') todayLines.push(`${d.t} Meßaufnahme mit Referenzkörper`);
-              
+
               if (Number(d.kanaele) > 0) {
                   todayLines.push(`${d.t} Längenmessung mit Endometrie, Längen:`);
                   const wrap = document.getElementById(`kanalTexteWrap_wkb_${d.s}`);
@@ -144,7 +160,7 @@ function getWkbData() {
                   }
               }
               todayLines.push(`Trocknung der Kanäle (${d.t}) mit Papierspitzen`);
-              
+
               if (d.verf === 'VitE' && d.wfMitgemacht === 'Ja') {
                   todayLines.push(`Abfüllen der Kanäle (${d.t}) mit ${d.wf} + Sealer (${d.sealer})`);
                   todayLines.push(`Röntgenkontrollaufnahme nach Einbringen der WF (${d.t})`);
@@ -164,7 +180,7 @@ function getWkbData() {
 
           todayLines.push(`Entfernen d. prov. Verschlusses (${tsStr})`);
           stepTeeth.forEach(d => {
-              todayLines.push(`Spülung d. Med aus den WK (${d.t}) mit NaOCL${d.mkv === 'Ja' ? ' + Ultraschall' : ''}`);
+              todayLines.push(`Spülung d. Med aus den WK (${d.t}) mit NaOCL${d.ultraschall === 'Ja' ? ' + Ultraschall' : ''}`);
               todayLines.push(`Trocknung der Kanäle (${d.t}) mit Papierspitzen`);
               todayLines.push(`Einlage einer medikamentösen Einlage ${d.med} in ${d.t}`);
               todayLines.push(`${d.t} mit Cavit+Watte prov. verschlossen`);
@@ -179,7 +195,7 @@ function getWkbData() {
           todayLines.push(`Entfernen d. prov. Verschlusses (${tsStr})`);
           stepTeeth.forEach(d => {
               todayLines.push(`${d.t} Wurzelkanäle aufbereitet`);
-              todayLines.push(`Spülung d. Kanäle (${d.t}) mit NaOCL${d.mkv === 'Ja' ? ' + Ultraschall' : ''}`);
+              todayLines.push(`Spülung d. Kanäle (${d.t}) mit NaOCL${d.ultraschall === 'Ja' ? ' + Ultraschall' : ''}`);
               todayLines.push(`Trocknung der Kanäle (${d.t}) mit Papierspitzen`);
               todayLines.push(`Abfüllen der Kanäle (${d.t}) mit ${d.wf} + Sealer (${d.sealer})`);
               todayLines.push(`Röntgenkontrollaufnahme nach Einbringen der WF (${d.t})`);

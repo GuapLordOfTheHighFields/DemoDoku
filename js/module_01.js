@@ -37,7 +37,9 @@ function get01Data() {
     if (getVal('zst_01') === 'Ja') todayLines.push(`Zahnstein entfernt`);
   } else {
     reason = getVal('untersuchung_01') === 'FU' ? "zur Frühuntersuchung" : "zur eingehenden Untersuchung";
-    otherBefund.push(`Pat. im ${getVal('gebiss_01')}`);
+    // Dativ: "im bleibenden Gebiss" (Auswahlwert lautet "bleibendes Gebiss")
+    const gebiss01 = getVal('gebiss_01') === 'bleibendes Gebiss' ? 'bleibenden Gebiss' : getVal('gebiss_01');
+    otherBefund.push(`Pat. im ${gebiss01}`);
     todayLines.push(getVal('untersuchung_01') === 'FU' ? `Frühuntersuchung` : `eingehende Untersuchung`);
     todayLines.push(`Praktische Anleitung der erziehungsberechtigten Person zur Mundhygiene + Putzanleitung des Kindes`);
     todayLines.push(`Ernährungsanweisungen + Fluoridierungsmaßnahmen besprochen`);
